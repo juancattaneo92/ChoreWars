@@ -1,0 +1,19 @@
+# Database
+cleanings.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Personal / internal
+litterboxExpert_agent.md
+tmp/
+
+# System
+.DS_Store
+
+# Systemd service files (local to each Pi)
+*.service

@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Scoop Troop</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+
+    :root {
+      --bg-a: #0a0718;
+      --bg-b: #130a2e;
+      --bg-c: #1a0f3d;
+      --glass: rgba(255,255,255,0.07);
+      --glass-b: rgba(255,255,255,0.12);
+      --text: #f0e6ff;
+      --muted: rgba(255,255,255,0.45);
+      --radius: 22px;
+      /* MG = player2 = top button (warm purple) */
+      --mg-a: #6d1fa8;
+      --mg-b: #c026d3;
+      /* JC = player1 = bottom button (blue) */
+      --jc-a: #1e3a8a;
+      --jc-b: #2563eb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(160deg, var(--bg-a), var(--bg-b), var(--bg-c));
+      height: 100dvh;
+      width: 100vw;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 14px 14px;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    /* Ambient blobs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 260px; height: 260px;
+      background: #a855f7;
+      top: -90px; left: -90px;
+    }
+    body::after {
+      width: 220px; height: 220px;
+      background: #2563eb;
+      bottom: -70px; right: -70px;
+    }
+
+    /* ============================================================
+       FRAMES
+    ============================================================ */
+    .frame {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .hidden { display: none !important; }
+
+    /* ============================================================
+       HEADER (shared)
+    ============================================================ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      height: 72px;
+    }
+
+    .date-label {
+      font-size: min(5.5vw, 3.8vh);
+      font-weight: 900;
+      background: linear-gradient(90deg, #c084fc, #f9a8d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.02em;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: 16px;
+      width: min(30vw, 20vh);
+      height: min(20vw, 10vh);
+      min-width: 68px;
+      min-height: 68px;
+      font-size: min(8vw, 5.5vh);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      color: var(--text);
+    }
+    .icon-btn:active { background: rgba(255,255,255,0.15); }
+
+    /* Gold star used instead of trophy emoji (better Pi rendering) */
+    .icon-star { color: #fbbf24; font-style: normal; font-size: min(8.5vw, 5.8vh); }
+
+    .avatar-chip {
+      width: min(10vw, 7vh);
+      height: min(10vw, 7vh);
+      min-width: 36px;
+      min-height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: min(4.5vw, 3.2vh);
+      font-weight: 900;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .chip-mg { background: linear-gradient(135deg, var(--mg-a), var(--mg-b)); }
+    .chip-jc { background: linear-gradient(135deg, var(--jc-a), var(--jc-b)); }
+
+    /* ============================================================
+       FRAME 1 — Player buttons
+    ============================================================ */
+    .players {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .btn-player {
+      flex: 1;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: min(1.6vh, 12px);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: transform 0.12s cubic-bezier(.34,1.56,.64,1);
+      overflow: hidden;
+      position: relative;
+    }
+    .btn-player::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.15s;
+    }
+    .btn-player:active { transform: scale(0.96); }
+    .btn-player:active::after { background: rgba(255,255,255,0.1); }
+
+    .btn-mg {
+      background: linear-gradient(160deg, var(--mg-a), var(--mg-b));
+      box-shadow: 0 10px 50px rgba(168,50,230,0.45), 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .btn-jc {
+      background: linear-gradient(160deg, var(--jc-a), var(--jc-b));
+      box-shadow: 0 10px 50px rgba(37,99,235,0.45), 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .player-emoji { font-size: min(19vw, 13vh); line-height: 1; position: relative; z-index: 1; }
+    .player-name  { font-size: min(10vw, 7vh); font-weight: 900; color: #fff; letter-spacing: 0.05em; position: relative; z-index: 1; }
+
+    /* ============================================================
+       FRAME 2 — Today's celebration
+    ============================================================ */
+    .today-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: min(1.4vh, 10px);
+      min-height: 0;
+    }
+
+    .big-emoji { font-size: min(24vw, 16vh); line-height: 1; }
+
+    .today-date-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: min(5.8vw, 4vh);
+      font-weight: 900;
+    }
+
+    .check-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: min(8vw, 5.5vh);
+      height: min(8vw, 5.5vh);
+      min-width: 28px;
+      min-height: 28px;
+      border-radius: 9px;
+      background: #16a34a;
+      font-size: min(4.5vw, 3vh);
+      flex-shrink: 0;
+    }
+
+    .winner-name {
+      font-size: min(15vw, 10vh);
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 0.05em;
+      line-height: 1;
+      text-shadow: 0 0 30px rgba(192,38,211,0.6);
+    }
+
+    .streak-line {
+      font-size: min(5vw, 3.5vh);
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .monthly-line {
+      font-size: min(4.5vw, 3.1vh);
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    /* Sad cat — loser badge, bottom-left corner */
+    .sad-cat {
+      position: absolute;
+      bottom: 14px;
+      left: 16px;
+      font-size: min(13vw, 9vh);
+      z-index: 2;
+      opacity: 0.85;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sad-initials {
+      font-size: min(5vw, 3.5vh);
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    /* ============================================================
+       OVERLAYS (Trophy + Settings) — slide up from bottom
+    ============================================================ */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(7px);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+    }
+    .overlay.hidden { display: none !important; }
+
+    .overlay-sheet {
+      width: 100%;
+      background: linear-gradient(180deg, #1a0d3a, #110828);
+      border: 1px solid var(--glass-b);
+      border-top-left-radius: 26px;
+      border-top-right-radius: 26px;
+      max-height: 82dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px 12px;
+      font-size: min(4.8vw, 3.4vh);
+      font-weight: 900;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--glass-b);
+    }
+
+    .close-btn {
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      color: var(--text);
+      border-radius: 9px;
+      width: 12vh;
+      height: 8vh;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .close-btn:active { background: rgba(255,255,255,0.15); }
+
+    .sheet-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .entry-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 18px;
+      font-size: min(4.2vw, 3vh);
+      font-weight: 700;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .entry-row:last-child { border-bottom: none; }
+
+    .entry-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-mg { background: var(--mg-b); box-shadow: 0 0 6px var(--mg-b); }
+    .dot-jc { background: var(--jc-b); box-shadow: 0 0 6px var(--jc-b); }
+
+    .entry-person { flex: 1; }
+    .entry-date {
+      color: var(--muted);
+      font-size: min(3.6vw, 2.5vh);
+    }
+
+    .btn-del {
+      background: rgba(255,50,50,0.1);
+      border: 1px solid rgba(255,80,80,0.25);
+      color: rgba(255,130,130,0.85);
+      border-radius: 10px;
+      width: min(12vw, 8vh);
+      height: min(12vw, 8vh);
+      min-width: 50px;
+      min-height: 50px;
+      font-size: min(5.5vw, 3.8vh);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-del:active { background: rgba(255,50,50,0.25); }
+
+    /* Monthly summary card inside trophy overlay */
+    .month-summary {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--glass-b);
+      flex-shrink: 0;
+    }
+    .month-summary-title {
+      font-size: min(3.8vw, 2.6vh);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .month-summary-rows { display: flex; flex-direction: column; gap: 8px; }
+    .summary-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .summary-name {
+      font-size: min(4.2vw, 2.9vh);
+      font-weight: 900;
+      width: min(10vw, 7vh);
+      flex-shrink: 0;
+    }
+    .summary-bar-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .summary-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    }
+    .bar-mg { background: linear-gradient(90deg, var(--mg-a), var(--mg-b)); }
+    .bar-jc { background: linear-gradient(90deg, var(--jc-a), var(--jc-b)); }
+    .summary-count {
+      font-size: min(4.2vw, 2.9vh);
+      font-weight: 900;
+      width: min(10vw, 7vh);
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .sheet-footer {
+      padding: 12px 18px 14px;
+      border-top: 1px solid var(--glass-b);
+      flex-shrink: 0;
+    }
+
+    .btn-reset-all {
+      width: 100%;
+      height: 10vh;
+      background: rgba(255,50,50,0.1);
+      border: 1px solid rgba(255,80,80,0.3);
+      color: rgba(255,140,140,0.9);
+      border-radius: 14px;
+      padding: min(1.6vh, 12px) 0;
+      font-family: inherit;
+      font-size: min(4.2vw, 3vh);
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-reset-all:active { background: rgba(255,50,50,0.22); }
+
+    /* ============================================================
+       CONFIRM MODAL
+    ============================================================ */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(7px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+    }
+    .modal-bg.hidden { display: none !important; }
+
+    .modal {
+      background: #1c0e3e;
+      border: 1px solid var(--glass-b);
+      border-radius: 22px;
+      padding: min(4vh, 26px) min(5vw, 22px);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    .modal h2 { font-size: min(5.5vw, 3.8vh); font-weight: 900; margin-bottom: 8px; }
+    .modal p  { font-size: min(4vw, 2.8vh); color: var(--muted); font-weight: 700; margin-bottom: min(3vh, 20px); line-height: 1.5; }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-btns button {
+      flex: 1;
+      border: none;
+      border-radius: 14px;
+      padding: min(1.6vh, 12px) 0;
+      font-family: inherit;
+      font-size: min(30vw, 3vh);
+      height: 10vh;
+      font-weight: 900;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-cancel  { background: var(--glass); color: var(--text); border: 1px solid var(--glass-b) !important; }
+    .btn-confirm { background: linear-gradient(135deg, #dc2626, #f87171); color: #fff; }
+
+    /* ============================================================
+       SLEEP + TOAST + CONFETTI
+    ============================================================ */
+    #sleep-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 10000;
+    }
+    #sleep-overlay.show { display: block; }
+
+    #toast {
+      position: fixed;
+      bottom: min(3vh, 22px);
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: linear-gradient(135deg, #7c3aed, #db2777);
+      color: #fff;
+      padding: min(1.5vh, 10px) min(5.5vw, 24px);
+      border-radius: 30px;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: min(4vw, 2.8vh);
+      box-shadow: 0 8px 30px rgba(124,58,237,0.5);
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    .confetti-piece {
+      position: fixed;
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 9998;
+      animation: cfall 0.9s ease-in forwards;
+    }
+    @keyframes cfall {
+      0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(220px) rotate(720deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       FRAME 1 — Choose who cleaned
+  ============================================================ -->
+  <div id="frame-select" class="frame">
+    <div class="header">
+      <div class="date-label" id="hdr-date-1"></div>
+      <div class="header-right">
+        <button class="icon-btn" onclick="openTrophy()"><i class="icon-star">★</i></button>
+        <button class="icon-btn" onclick="openSettings()">⚙️</button>
+      </div>
+    </div>
+    <div class="players">
+      <button class="btn-player btn-mg" onclick="recordClean('{{ player2 }}', this)">
+        <span class="player-emoji">😸</span>
+        <span class="player-name">{{ player2 }}</span>
+      </button>
+      <button class="btn-player btn-jc" onclick="recordClean('{{ player1 }}', this)">
+        <span class="player-emoji">😼</span>
+        <span class="player-name">{{ player1 }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       FRAME 2 — Today's cleaned
+  ============================================================ -->
+  <div id="frame-today" class="frame hidden">
+    <div class="header">
+      <div class="date-label" id="hdr-date-2"></div>
+      <div class="header-right">
+        <button class="icon-btn" onclick="openTrophy()"><i class="icon-star">★</i></button>
+        <button class="icon-btn" onclick="openSettings()">⚙️</button>
+        <div class="avatar-chip" id="avatar-chip"></div>
+      </div>
+    </div>
+    <div class="today-body">
+      <div class="big-emoji">😻</div>
+      <div class="today-date-row">
+        <span id="today-date-txt"></span>
+        <span class="check-box">✓</span>
+      </div>
+      <div class="winner-name" id="winner-name"></div>
+      <div class="streak-line" id="streak-line"></div>
+      <div class="monthly-line" id="monthly-line"></div>
+    </div>
+    <div class="sad-cat">😿 <span id="sad-initials" class="sad-initials"></span></div>
+  </div>
+
+  <!-- ============================================================
+       TROPHY OVERLAY
+  ============================================================ -->
+  <div id="overlay-trophy" class="overlay hidden">
+    <div class="overlay-sheet">
+      <div class="sheet-header">
+        <span>🏆 History</span>
+        <button class="close-btn" onclick="closeOverlay('overlay-trophy')">✕</button>
+      </div>
+      <div class="month-summary" id="trophy-summary"></div>
+      <div class="sheet-list" id="trophy-list"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SETTINGS OVERLAY
+  ============================================================ -->
+  <div id="overlay-settings" class="overlay hidden">
+    <div class="overlay-sheet">
+      <div class="sheet-header">
+        <span>⚙️ Settings</span>
+        <button class="close-btn" onclick="closeOverlay('overlay-settings')">✕</button>
+      </div>
+      <div class="sheet-list" id="settings-list"></div>
+      <div class="sheet-footer">
+        <button class="btn-reset-all" onclick="confirmReset()">🗑 Reset all scores</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       CONFIRM MODAL
+  ============================================================ -->
+  <div id="modal-confirm" class="modal-bg hidden">
+    <div class="modal">
+      <h2>Reset everything?</h2>
+      <p>All cleaning records will be deleted permanently.</p>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="btn-confirm" onclick="doReset()">Yes, reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <div id="sleep-overlay"></div>
+
+  <script>
+    const P1 = "{{ player1 }}";  // JC
+    const P2 = "{{ player2 }}";  // MG
+    const CONFETTI_COLORS = ["#a855f7","#f472b6","#818cf8","#34d399","#fbbf24","#f87171","#60a5fa"];
+
+    let currentDay = localDateStr();
+
+    // ---- Date helpers ----
+    function localDateStr() {
+      const n = new Date();
+      return n.getFullYear() + '-' +
+        String(n.getMonth()+1).padStart(2,'0') + '-' +
+        String(n.getDate()).padStart(2,'0');
+    }
+
+    function ordinal(n) {
+      const s = ['th','st','nd','rd'];
+      const v = n % 100;
+      return n + (s[(v-20)%10] || s[v] || s[0]);
+    }
+
+    function fmtDate(isoDate) {
+      // "2026-04-21" → "Apr. 21st"
+      const [y, m, d] = isoDate.split('-').map(Number);
+      const dt = new Date(y, m-1, d);
+      const month = dt.toLocaleDateString('en-US', { month: 'short' });
+      return `${month}. ${ordinal(d)}`;
+    }
+
+    function todayLabel() {
+      return fmtDate(localDateStr());
+    }
+
+    function updateDateHeaders() {
+      const label = todayLabel();
+      document.getElementById('hdr-date-1').textContent = label;
+      document.getElementById('hdr-date-2').textContent = label;
+      document.getElementById('today-date-txt').textContent = label;
+    }
+
+    // ---- Toast ----
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    // ---- Confetti ----
+    function burst(cx, cy) {
+      for (let i = 0; i < 24; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.cssText = `
+          left:${cx + (Math.random()-0.5)*140}px;
+          top:${cy + (Math.random()-0.5)*80}px;
+          background:${CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)]};
+          width:${5+Math.random()*8}px;
+          height:${5+Math.random()*8}px;
+          animation-duration:${0.7+Math.random()*0.65}s;
+          animation-delay:${Math.random()*0.2}s;
+        `;
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+      }
+    }
+
+    // ---- Frames ----
+    function showFrame1() {
+      document.getElementById('frame-select').classList.remove('hidden');
+      document.getElementById('frame-today').classList.add('hidden');
+    }
+
+    function showFrame2(data) {
+      const p = data.person;
+
+      // Avatar chip in header
+      const chip = document.getElementById('avatar-chip');
+      chip.textContent = p[0];
+      chip.className = 'avatar-chip ' + (p === P2 ? 'chip-mg' : 'chip-jc');
+
+      // Winner name
+      document.getElementById('winner-name').textContent = p;
+
+      // Streak
+      const streakEl = document.getElementById('streak-line');
+      if (data.streak >= 1) {
+        streakEl.textContent = `🔥 ${data.streak} day streak`;
+        streakEl.style.display = '';
+      } else {
+        streakEl.style.display = 'none';
+      }
+
+      // Monthly count
+      document.getElementById('monthly-line').textContent =
+        `${data.monthly}/${data.days_in_month} days in ${data.month_name}`;
+
+      // Sad cat initials (the other person)
+      document.getElementById('sad-initials').textContent = '(' + (p === P1 ? P2 : P1) + ')';
+
+      document.getElementById('frame-select').classList.add('hidden');
+      document.getElementById('frame-today').classList.remove('hidden');
+    }
+
+    // ---- Load today's state ----
+    async function loadToday() {
+      const res = await fetch('/api/today');
+      const data = await res.json();
+      if (data.person) {
+        showFrame2(data);
+      } else {
+        showFrame1();
+      }
+    }
+
+    // ---- Record a cleaning ----
+    async function recordClean(person, btn) {
+      const rect = btn.getBoundingClientRect();
+      const res = await fetch('/api/clean', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ person })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        burst(rect.left + rect.width/2, rect.top + rect.height/3);
+        showToast('🐱 Logged for ' + person + '!');
+        showFrame2(data);
+      } else if (res.status === 409) {
+        showToast('Already logged today!');
+        loadToday();
+      } else {
+        showToast('Something went wrong');
+      }
+    }
+
+    // ---- Trophy overlay ----
+    async function openTrophy() {
+      const res = await fetch('/api/history');
+      const items = await res.json();
+
+      // Monthly summary
+      const now = new Date();
+      const monthStart = now.getFullYear() + '-' +
+        String(now.getMonth()+1).padStart(2,'0') + '-01';
+      const monthName = now.toLocaleDateString('en-US', { month: 'long' });
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+
+      const p1Count = items.filter(i => i.person === P1 && i.date >= monthStart).length;
+      const p2Count = items.filter(i => i.person === P2 && i.date >= monthStart).length;
+      const maxCount = Math.max(p1Count, p2Count, 1);
+
+      const summaryEl = document.getElementById('trophy-summary');
+      summaryEl.innerHTML = `
+        <div class="month-summary-title">${monthName} — ${daysInMonth} days</div>
+        <div class="month-summary-rows">
+          <div class="summary-row">
+            <div class="summary-name">${P2}</div>
+            <div class="summary-bar-track">
+              <div class="summary-bar bar-mg" style="width:${p2Count/maxCount*100}%"></div>
+            </div>
+            <div class="summary-count">${p2Count}</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-name">${P1}</div>
+            <div class="summary-bar-track">
+              <div class="summary-bar bar-jc" style="width:${p1Count/maxCount*100}%"></div>
+            </div>
+            <div class="summary-count">${p1Count}</div>
+          </div>
+        </div>`;
+
+      // History list
+      const list = document.getElementById('trophy-list');
+      if (!items.length) {
+        list.innerHTML = `<div class="entry-row" style="color:var(--muted)">No cleanings yet — go scoop!</div>`;
+      } else {
+        list.innerHTML = items.map(item => `
+          <div class="entry-row">
+            <div class="entry-dot ${item.person === P2 ? 'dot-mg' : 'dot-jc'}"></div>
+            <div class="entry-person">${item.person}</div>
+            <div class="entry-date">${fmtDate(item.date)}</div>
+          </div>`).join('');
+      }
+      document.getElementById('overlay-trophy').classList.remove('hidden');
+    }
+
+    // ---- Settings overlay ----
+    async function openSettings() {
+      await renderSettings();
+      document.getElementById('overlay-settings').classList.remove('hidden');
+    }
+
+    async function renderSettings() {
+      const res = await fetch('/api/history');
+      const items = await res.json();
+      const list = document.getElementById('settings-list');
+      if (!items.length) {
+        list.innerHTML = `<div class="entry-row" style="color:var(--muted)">No cleanings yet!</div>`;
+        return;
+      }
+      list.innerHTML = items.map(item => `
+        <div class="entry-row" id="entry-${item.id}">
+          <div class="entry-dot ${item.person === P2 ? 'dot-mg' : 'dot-jc'}"></div>
+          <div class="entry-person">${item.person}</div>
+          <div class="entry-date">${fmtDate(item.date)}</div>
+          <button class="btn-del" onclick="deleteEntry(${item.id})">🗑</button>
+        </div>`).join('');
+    }
+
+    async function deleteEntry(id) {
+      const res = await fetch(`/api/clean/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        const el = document.getElementById(`entry-${id}`);
+        if (el) el.remove();
+        showToast('Entry removed');
+        loadToday();  // might need to switch frames if we deleted today
+      }
+    }
+
+    function closeOverlay(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Close overlay when tapping the dark backdrop (not the sheet itself)
+    document.getElementById('overlay-trophy').addEventListener('click', function(e) {
+      if (e.target === this) closeOverlay('overlay-trophy');
+    });
+    document.getElementById('overlay-settings').addEventListener('click', function(e) {
+      if (e.target === this) closeOverlay('overlay-settings');
+    });
+
+    // ---- Reset ----
+    function confirmReset() {
+      document.getElementById('modal-confirm').classList.remove('hidden');
+    }
+    function closeConfirm() {
+      document.getElementById('modal-confirm').classList.add('hidden');
+    }
+    async function doReset() {
+      closeConfirm();
+      closeOverlay('overlay-settings');
+      const res = await fetch('/api/reset', { method: 'POST' });
+      if (res.ok) { showToast('🗑 Scores cleared!'); loadToday(); }
+    }
+
+    // ---- Midnight day-change check ----
+    setInterval(() => {
+      const newDay = localDateStr();
+      if (newDay !== currentDay) {
+        currentDay = newDay;
+        updateDateHeaders();
+        loadToday();
+      }
+    }, 60000);
+
+    // ---- Sleep mode ----
+    const SLEEP_MS = 90000;
+    const sleepEl = document.getElementById('sleep-overlay');
+    let sleepTimer;
+
+    function resetSleep() {
+      clearTimeout(sleepTimer);
+      sleepTimer = setTimeout(() => sleepEl.classList.add('show'), SLEEP_MS);
+    }
+
+    sleepEl.addEventListener('touchstart', function(e) {
+      if (sleepEl.classList.contains('show')) {
+        e.preventDefault();
+        e.stopPropagation();
+        sleepEl.classList.remove('show');
+        resetSleep();
+      }
+    }, { passive: false });
+    sleepEl.addEventListener('click', function() {
+      sleepEl.classList.remove('show');
+      resetSleep();
+    });
+
+    document.addEventListener('touchstart', resetSleep, { passive: true });
+    document.addEventListener('click', resetSleep);
+    resetSleep();
+
+    // ---- Boot ----
+    updateDateHeaders();
+    loadToday();
+    setInterval(updateDateHeaders, 60000);
+  </script>
+</body>
+</html>
