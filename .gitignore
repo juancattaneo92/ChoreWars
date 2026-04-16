@@ -9,7 +9,6 @@ venv/
 .venv/
 
 # Personal / internal
-litterboxExpert_agent.md
 tmp/
 
 # System
