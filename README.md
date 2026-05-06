@@ -15,6 +15,16 @@ A home chore tracker built for two people, running as a touchscreen kiosk on a R
 
 ---
 
+## Screenshots
+
+![Home Screen](ReadMe_Images/ChoreWars1.png)
+![Chore Selection](ReadMe_Images/ChoreWars2.png)
+![Celebration Screen](ReadMe_Images/ChoreWars3.png)
+![History View](ReadMe_Images/ChoreWars4.png)
+![Settings](ReadMe_Images/ChoreWars5.png)
+
+---
+
 ## Hardware
 
 | Part | Details |
