@@ -3,23 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LitterBoxTracker</title>
+  <title>ChoreWars</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
 
     :root {
-      --bg-a: #0a0718;
-      --bg-b: #130a2e;
-      --bg-c: #1a0f3d;
-      --glass: rgba(255,255,255,0.07);
-      --glass-b: rgba(255,255,255,0.12);
+      --bg-a: #1e1254;
+      --bg-b: #2d1b69;
+      --bg-c: #4a2d8a;
+      --glass: rgba(255,255,255,0.10);
+      --glass-b: rgba(255,255,255,0.18);
       --text: #f0e6ff;
-      --muted: rgba(255,255,255,0.45);
+      --muted: rgba(255,255,255,0.55);
       --radius: 22px;
-      /* MG = player2 = top button (warm purple) */
       --mg-a: #6d1fa8;
       --mg-b: #c026d3;
-      /* JC = player1 = bottom button (blue) */
       --jc-a: #1e3a8a;
       --jc-b: #2563eb;
     }
@@ -40,30 +38,18 @@
       overflow: hidden;
     }
 
-    /* Ambient blobs */
     body::before, body::after {
       content: '';
       position: fixed;
       border-radius: 50%;
       filter: blur(90px);
-      opacity: 0.18;
+      opacity: 0.30;
       pointer-events: none;
       z-index: 0;
     }
-    body::before {
-      width: 260px; height: 260px;
-      background: #a855f7;
-      top: -90px; left: -90px;
-    }
-    body::after {
-      width: 220px; height: 220px;
-      background: #2563eb;
-      bottom: -70px; right: -70px;
-    }
+    body::before { width: 260px; height: 260px; background: #a855f7; top: -90px; left: -90px; }
+    body::after  { width: 220px; height: 220px; background: #2563eb; bottom: -70px; right: -70px; }
 
-    /* ============================================================
-       FRAMES
-    ============================================================ */
     .frame {
       display: flex;
       flex-direction: column;
@@ -76,7 +62,7 @@
     .hidden { display: none !important; }
 
     /* ============================================================
-       HEADER (shared)
+       HEADER
     ============================================================ */
     .header {
       display: flex;
@@ -85,10 +71,12 @@
       flex-shrink: 0;
       height: 72px;
     }
+    .header-left  { display: flex; align-items: center; gap: 8px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
 
     .date-label {
-      font-size: min(5.5vw, 3.8vh);
       font-weight: 900;
+      font-size: min(6.2vw, 4.3vh);
       background: linear-gradient(90deg, #c084fc, #f9a8d4);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -96,10 +84,18 @@
       letter-spacing: 0.02em;
     }
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .date-block { display: flex; flex-direction: column; gap: 1px; }
+    .time-label {
+      font-size: min(4vw, 2.8vh);
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .chore-header-label {
+      font-size: min(4.5vw, 3.2vh);
+      font-weight: 900;
+      color: var(--text);
     }
 
     .icon-btn {
@@ -119,9 +115,29 @@
       touch-action: manipulation;
       color: var(--text);
     }
-    .icon-btn:active { background: rgba(255,255,255,0.15); }
+    .icon-btn:active { background: rgba(255,255,255,0.20); }
 
-    /* Gold star used instead of trophy emoji (better Pi rendering) */
+    .btn-back {
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: 16px;
+      width: min(18vw, 12vh);
+      height: min(14vw, 10vh);
+      min-width: 56px;
+      min-height: 56px;
+      font-size: min(6vw, 4.2vh);
+      font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      color: var(--text);
+    }
+    .btn-back:active { background: rgba(255,255,255,0.20); }
+
     .icon-star { color: #fbbf24; font-style: normal; font-size: min(8.5vw, 5.8vh); }
 
     .avatar-chip {
@@ -140,6 +156,72 @@
     }
     .chip-mg { background: linear-gradient(135deg, var(--mg-a), var(--mg-b)); }
     .chip-jc { background: linear-gradient(135deg, var(--jc-a), var(--jc-b)); }
+
+    /* ============================================================
+       WEEKLY STRIP (Frame 0)
+    ============================================================ */
+    .weekly-strip {
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+      height: 60px;
+    }
+
+    .score-card {
+      flex: 1;
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .score-name  { font-size: min(5.2vw, 3.6vh); font-weight: 900; color: var(--text); }
+    .score-divider { width: 1px; height: 22px; background: var(--glass-b); }
+    .score-count { font-size: min(6.8vw, 4.8vh); font-weight: 900; color: #fff; }
+    .score-label { font-size: min(3.2vw, 2.2vh); font-weight: 700; color: var(--muted); }
+
+    /* ============================================================
+       FRAME 0 — Chore Grid
+    ============================================================ */
+    .chore-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .btn-chore {
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 8px 6px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: transform 0.12s cubic-bezier(.34,1.56,.64,1);
+      overflow: hidden;
+      position: relative;
+    }
+    .btn-chore:active { transform: scale(0.95); }
+
+    .chore-emoji      { font-size: min(11vw, 7vh); line-height: 1; }
+    .chore-done-hero  { font-size: min(9vw, 6vh); font-weight: 900; color: #4ade80; line-height: 1; letter-spacing: 0.02em; }
+    .chore-name       { font-size: min(4.5vw, 3vh); font-weight: 900; color: #fff; }
+    .chore-week-count { font-size: min(3.6vw, 2.5vh); font-weight: 700; color: rgba(255,255,255,0.65); }
+
+    .chore-litter   { background: linear-gradient(160deg,#5b21b6,#9333ea); box-shadow: 0 6px 24px rgba(147,51,234,0.38); }
+    .chore-dishes   { background: linear-gradient(160deg,#0f766e,#14b8a6); box-shadow: 0 6px 24px rgba(20,184,166,0.38); }
+    .chore-laundry  { background: linear-gradient(160deg,#1d4ed8,#3b82f6); box-shadow: 0 6px 24px rgba(59,130,246,0.38); }
+    .chore-bathroom { background: linear-gradient(160deg,#3730a3,#6366f1); box-shadow: 0 6px 24px rgba(99,102,241,0.38); }
+    .chore-vacuum   { background: linear-gradient(160deg,#92400e,#f59e0b); box-shadow: 0 6px 24px rgba(245,158,11,0.38); }
+    .chore-trash    { background: linear-gradient(160deg,#166534,#22c55e); box-shadow: 0 6px 24px rgba(34,197,94,0.38); }
 
     /* ============================================================
        FRAME 1 — Player buttons
@@ -191,7 +273,7 @@
     .player-name  { font-size: min(10vw, 7vh); font-weight: 900; color: #fff; letter-spacing: 0.05em; position: relative; z-index: 1; }
 
     /* ============================================================
-       FRAME 2 — Today's celebration
+       FRAME 2 — Celebration
     ============================================================ */
     .today-body {
       flex: 1;
@@ -203,13 +285,20 @@
       min-height: 0;
     }
 
-    .big-emoji { font-size: min(24vw, 16vh); line-height: 1; }
+    .big-emoji { font-size: min(22vw, 15vh); line-height: 1; }
+
+    .chore-tag {
+      font-size: min(5.2vw, 3.6vh);
+      font-weight: 800;
+      color: rgba(255,255,255,0.72);
+      letter-spacing: 0.04em;
+    }
 
     .today-date-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: min(5.8vw, 4vh);
+      font-size: min(6.5vw, 4.5vh);
       font-weight: 900;
     }
 
@@ -236,19 +325,24 @@
       text-shadow: 0 0 30px rgba(192,38,211,0.6);
     }
 
-    .streak-line {
-      font-size: min(5vw, 3.5vh);
-      font-weight: 800;
-      color: var(--text);
+    .streak-line  { font-size: min(5.8vw, 4vh); font-weight: 800; color: var(--text); }
+    .monthly-line { font-size: min(5.2vw, 3.6vh); font-weight: 700; color: var(--muted); }
+
+    /* Auto-return countdown bar */
+    .return-bar-track {
+      height: 4px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 2px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    #return-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #a855f7, #ec4899);
+      border-radius: 2px;
     }
 
-    .monthly-line {
-      font-size: min(4.5vw, 3.1vh);
-      font-weight: 700;
-      color: var(--muted);
-    }
-
-    /* Sad cat — loser badge, bottom-left corner */
     .sad-cat {
       position: absolute;
       bottom: 14px;
@@ -261,14 +355,10 @@
       align-items: center;
       gap: 6px;
     }
-    .sad-initials {
-      font-size: min(5vw, 3.5vh);
-      font-weight: 900;
-      color: var(--muted);
-    }
+    .sad-initials { font-size: min(5.8vw, 4vh); font-weight: 900; color: var(--muted); }
 
     /* ============================================================
-       OVERLAYS (Trophy + Settings) — slide up from bottom
+       OVERLAYS
     ============================================================ */
     .overlay {
       position: fixed;
@@ -298,7 +388,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 16px 18px 12px;
-      font-size: min(4.8vw, 3.4vh);
+      font-size: min(5.5vw, 3.8vh);
       font-weight: 900;
       flex-shrink: 0;
       border-bottom: 1px solid var(--glass-b);
@@ -311,7 +401,9 @@
       border-radius: 9px;
       width: 12vh;
       height: 8vh;
-      font-size: 1rem;
+      font-size: min(5vw, 3.5vh);
+      font-weight: 900;
+      font-family: inherit;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -330,38 +422,34 @@
     .entry-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       padding: 11px 18px;
-      font-size: min(4.2vw, 3vh);
+      font-size: min(4.8vw, 3.4vh);
       font-weight: 700;
       border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     .entry-row:last-child { border-bottom: none; }
 
-    .entry-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+    .entry-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .dot-mg { background: var(--mg-b); box-shadow: 0 0 6px var(--mg-b); }
     .dot-jc { background: var(--jc-b); box-shadow: 0 0 6px var(--jc-b); }
 
-    .entry-person { flex: 1; }
-    .entry-date {
-      color: var(--muted);
-      font-size: min(3.6vw, 2.5vh);
-    }
+    .entry-person { font-weight: 900; min-width: min(10vw, 7vh); flex-shrink: 0; }
+    .entry-chore  { flex: 1; color: var(--muted); font-size: min(4.4vw, 3.1vh); }
+    .entry-date   { color: var(--muted); font-size: min(4.1vw, 2.9vh); flex-shrink: 0; }
 
     .btn-del {
-      background: rgba(255,50,50,0.1);
-      border: 1px solid rgba(255,80,80,0.25);
-      color: rgba(255,130,130,0.85);
+      background: rgba(220,38,38,0.15);
+      border: 1px solid rgba(248,113,113,0.35);
+      color: #fff;
       border-radius: 10px;
       width: min(12vw, 8vh);
       height: min(12vw, 8vh);
       min-width: 50px;
       min-height: 50px;
-      font-size: min(5.5vw, 3.8vh);
+      font-size: min(4.5vw, 3.2vh);
+      font-weight: 900;
+      font-family: inherit;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -369,16 +457,15 @@
       flex-shrink: 0;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-del:active { background: rgba(255,50,50,0.25); }
+    .btn-del:active { background: rgba(220,38,38,0.32); }
 
-    /* Monthly summary card inside trophy overlay */
     .month-summary {
       padding: 14px 18px;
       border-bottom: 1px solid var(--glass-b);
       flex-shrink: 0;
     }
     .month-summary-title {
-      font-size: min(3.8vw, 2.6vh);
+      font-size: min(4.4vw, 3vh);
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.12em;
@@ -386,61 +473,33 @@
       margin-bottom: 10px;
     }
     .month-summary-rows { display: flex; flex-direction: column; gap: 8px; }
-    .summary-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .summary-name {
-      font-size: min(4.2vw, 2.9vh);
-      font-weight: 900;
-      width: min(10vw, 7vh);
-      flex-shrink: 0;
-    }
-    .summary-bar-track {
-      flex: 1;
-      height: 8px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .summary-bar {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.5s cubic-bezier(.4,0,.2,1);
-    }
+    .summary-row { display: flex; align-items: center; gap: 10px; }
+    .summary-name  { font-size: min(4.8vw, 3.3vh); font-weight: 900; width: min(10vw, 7vh); flex-shrink: 0; }
+    .summary-bar-track { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+    .summary-bar   { height: 100%; border-radius: 4px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
     .bar-mg { background: linear-gradient(90deg, var(--mg-a), var(--mg-b)); }
     .bar-jc { background: linear-gradient(90deg, var(--jc-a), var(--jc-b)); }
-    .summary-count {
-      font-size: min(4.2vw, 2.9vh);
-      font-weight: 900;
-      width: min(10vw, 7vh);
-      text-align: right;
-      flex-shrink: 0;
-    }
+    .summary-count { font-size: min(4.8vw, 3.3vh); font-weight: 900; width: min(10vw, 7vh); text-align: right; flex-shrink: 0; }
 
     .sheet-footer {
       padding: 12px 18px 14px;
       border-top: 1px solid var(--glass-b);
       flex-shrink: 0;
     }
-
     .btn-reset-all {
       width: 100%;
       height: 10vh;
-      background: rgba(255,50,50,0.1);
-      border: 1px solid rgba(255,80,80,0.3);
+      background: rgba(220,38,38,0.10);
+      border: 1px solid rgba(248,113,113,0.30);
       color: rgba(255,140,140,0.9);
       border-radius: 14px;
-      padding: min(1.6vh, 12px) 0;
       font-family: inherit;
       font-size: min(4.2vw, 3vh);
       font-weight: 800;
       cursor: pointer;
-      letter-spacing: 0.02em;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-reset-all:active { background: rgba(255,50,50,0.22); }
+    .btn-reset-all:active { background: rgba(220,38,38,0.22); }
 
     /* ============================================================
        CONFIRM MODAL
@@ -474,10 +533,9 @@
       flex: 1;
       border: none;
       border-radius: 14px;
-      padding: min(1.6vh, 12px) 0;
-      font-family: inherit;
-      font-size: min(30vw, 3vh);
       height: 10vh;
+      font-family: inherit;
+      font-size: min(4.5vw, 3vh);
       font-weight: 900;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -486,17 +544,60 @@
     .btn-confirm { background: linear-gradient(135deg, #dc2626, #f87171); color: #fff; }
 
     /* ============================================================
-       SLEEP + TOAST + CONFETTI
+       SLEEP OVERLAY
     ============================================================ */
     #sleep-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: #000;
       z-index: 10000;
+      overflow: hidden;
     }
     #sleep-overlay.show { display: block; }
 
+    #sleep-day {
+      position: absolute;
+      inset: 0;
+      background: rgba(12, 6, 30, 0.90);
+    }
+
+    #sleep-night {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 1, 8, 0.97);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sleep-time-night {
+      font-size: min(22vw, 15vh);
+      font-weight: 900;
+      color: rgba(255,255,255,0.10);
+      letter-spacing: 0.05em;
+      line-height: 1;
+      text-align: center;
+    }
+    .sleep-date-night {
+      font-size: min(4.5vw, 3.2vh);
+      font-weight: 700;
+      color: rgba(255,255,255,0.07);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .bounce-emoji {
+      position: absolute;
+      font-size: min(12vw, 8vh);
+      opacity: 0.45;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* ============================================================
+       TOAST + CONFETTI
+    ============================================================ */
     #toast {
       position: fixed;
       bottom: min(3vh, 22px);
@@ -533,51 +634,93 @@
 <body>
 
   <!-- ============================================================
-       FRAME 1 — Choose who cleaned
+       FRAME 0 — Home (chore grid)
   ============================================================ -->
-  <div id="frame-select" class="frame">
+  <div id="frame-home" class="frame">
     <div class="header">
-      <div class="date-label" id="hdr-date-1"></div>
+      <div class="date-block">
+        <div class="date-label" id="hdr-date-home"></div>
+        <div class="time-label" id="hdr-time-home"></div>
+      </div>
       <div class="header-right">
-        <button class="icon-btn" onclick="openTrophy()"><i class="icon-star">★</i></button>
-        <button class="icon-btn" onclick="openSettings()">⚙️</button>
+        <button class="icon-btn" onclick="openTrophy()"><i class="icon-star">&#9733;</i></button>
+        <button class="icon-btn" onclick="openSettings()">&#9881;&#65039;</button>
+      </div>
+    </div>
+    <div class="weekly-strip">
+      <div class="score-card">
+        <div>
+          <div class="score-name">{{ player1 }}</div>
+          <div class="score-label">this week</div>
+        </div>
+        <div class="score-divider"></div>
+        <div class="score-count" id="score-p1">0</div>
+      </div>
+      <div class="score-card">
+        <div>
+          <div class="score-name">{{ player2 }}</div>
+          <div class="score-label">this week</div>
+        </div>
+        <div class="score-divider"></div>
+        <div class="score-count" id="score-p2">0</div>
+      </div>
+    </div>
+    <div class="chore-grid" id="chore-grid"></div>
+  </div>
+
+  <!-- ============================================================
+       FRAME 1 — Player select
+  ============================================================ -->
+  <div id="frame-select" class="frame hidden">
+    <div class="header">
+      <div class="header-left">
+        <button class="btn-back" onclick="showHome()">&#8592;</button>
+        <div class="date-block">
+          <div class="date-label" id="hdr-date-select"></div>
+          <div class="time-label" id="hdr-time-select"></div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="chore-header-label" id="chore-header-label"></div>
       </div>
     </div>
     <div class="players">
       <button class="btn-player btn-mg" onclick="recordClean('{{ player2 }}', this)">
-        <span class="player-emoji">😸</span>
+        <span class="player-emoji">&#128568;</span>
         <span class="player-name">{{ player2 }}</span>
       </button>
       <button class="btn-player btn-jc" onclick="recordClean('{{ player1 }}', this)">
-        <span class="player-emoji">😼</span>
+        <span class="player-emoji">&#128572;</span>
         <span class="player-name">{{ player1 }}</span>
       </button>
     </div>
   </div>
 
   <!-- ============================================================
-       FRAME 2 — Today's cleaned
+       FRAME 2 — Celebration
   ============================================================ -->
   <div id="frame-today" class="frame hidden">
     <div class="header">
-      <div class="date-label" id="hdr-date-2"></div>
+      <button class="btn-back" onclick="goHome()">&#8592;</button>
       <div class="header-right">
-        <button class="icon-btn" onclick="openTrophy()"><i class="icon-star">★</i></button>
-        <button class="icon-btn" onclick="openSettings()">⚙️</button>
+        <button class="icon-btn" onclick="openTrophy()"><i class="icon-star">&#9733;</i></button>
+        <button class="icon-btn" onclick="openSettings()">&#9881;&#65039;</button>
         <div class="avatar-chip" id="avatar-chip"></div>
       </div>
     </div>
     <div class="today-body">
-      <div class="big-emoji">😻</div>
+      <div class="big-emoji">&#128571;</div>
+      <div class="chore-tag" id="chore-tag"></div>
       <div class="today-date-row">
         <span id="today-date-txt"></span>
-        <span class="check-box">✓</span>
+        <span class="check-box">&#10003;</span>
       </div>
       <div class="winner-name" id="winner-name"></div>
       <div class="streak-line" id="streak-line"></div>
       <div class="monthly-line" id="monthly-line"></div>
     </div>
-    <div class="sad-cat">😿 <span id="sad-initials" class="sad-initials"></span></div>
+    <div class="return-bar-track"><div id="return-bar"></div></div>
+    <div class="sad-cat">&#128575; <span id="sad-initials" class="sad-initials"></span></div>
   </div>
 
   <!-- ============================================================
@@ -586,8 +729,8 @@
   <div id="overlay-trophy" class="overlay hidden">
     <div class="overlay-sheet">
       <div class="sheet-header">
-        <span>🏆 History</span>
-        <button class="close-btn" onclick="closeOverlay('overlay-trophy')">✕</button>
+        <span>&#9733; History</span>
+        <button class="close-btn" onclick="closeOverlay('overlay-trophy')">X</button>
       </div>
       <div class="month-summary" id="trophy-summary"></div>
       <div class="sheet-list" id="trophy-list"></div>
@@ -600,12 +743,12 @@
   <div id="overlay-settings" class="overlay hidden">
     <div class="overlay-sheet">
       <div class="sheet-header">
-        <span>⚙️ Settings</span>
-        <button class="close-btn" onclick="closeOverlay('overlay-settings')">✕</button>
+        <span>&#9881; Settings</span>
+        <button class="close-btn" onclick="closeOverlay('overlay-settings')">X</button>
       </div>
       <div class="sheet-list" id="settings-list"></div>
       <div class="sheet-footer">
-        <button class="btn-reset-all" onclick="confirmReset()">🗑 Reset all scores</button>
+        <button class="btn-reset-all" onclick="confirmReset()">Reset all scores</button>
       </div>
     </div>
   </div>
@@ -616,7 +759,7 @@
   <div id="modal-confirm" class="modal-bg hidden">
     <div class="modal">
       <h2>Reset everything?</h2>
-      <p>All cleaning records will be deleted permanently.</p>
+      <p>All chore records will be deleted permanently.</p>
       <div class="modal-btns">
         <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
         <button class="btn-confirm" onclick="doReset()">Yes, reset</button>
@@ -625,14 +768,39 @@
   </div>
 
   <div id="toast"></div>
-  <div id="sleep-overlay"></div>
+
+  <!-- ============================================================
+       SLEEP OVERLAY
+  ============================================================ -->
+  <div id="sleep-overlay">
+    <div id="sleep-day"></div>
+    <div id="sleep-night" style="display:none">
+      <div>
+        <div class="sleep-time-night" id="sleep-time-night">00:00</div>
+        <div class="sleep-date-night" id="sleep-date-night"></div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const P1 = "{{ player1 }}";  // JC
-    const P2 = "{{ player2 }}";  // MG
+    const P1 = "{{ player1 }}";
+    const P2 = "{{ player2 }}";
+    const CHORES = {{ chores | safe }};
     const CONFETTI_COLORS = ["#a855f7","#f472b6","#818cf8","#34d399","#fbbf24","#f87171","#60a5fa"];
 
-    let currentDay = localDateStr();
+    const CHORE_CSS = {
+      "Litter Box": "chore-litter",
+      "Dishes":     "chore-dishes",
+      "Laundry":    "chore-laundry",
+      "Bathroom":   "chore-bathroom",
+      "Vacuum":     "chore-vacuum",
+      "Trash":      "chore-trash",
+    };
+
+    let currentDay   = localDateStr();
+    let currentChore = null;
+    let todayDone    = {};
+    let weeklyStats  = { players: {}, chores: {} };
 
     // ---- Date helpers ----
     function localDateStr() {
@@ -643,121 +811,196 @@
     }
 
     function ordinal(n) {
-      const s = ['th','st','nd','rd'];
-      const v = n % 100;
+      const s = ['th','st','nd','rd'], v = n % 100;
       return n + (s[(v-20)%10] || s[v] || s[0]);
     }
 
     function fmtDate(isoDate) {
-      // "2026-04-21" → "Apr. 21st"
-      const [y, m, d] = isoDate.split('-').map(Number);
-      const dt = new Date(y, m-1, d);
-      const month = dt.toLocaleDateString('en-US', { month: 'short' });
-      return `${month}. ${ordinal(d)}`;
+      const [y,m,d] = isoDate.split('-').map(Number);
+      const month = new Date(y,m-1,d).toLocaleDateString('en-US',{month:'short'});
+      return month + '. ' + ordinal(d);
     }
 
-    function todayLabel() {
-      return fmtDate(localDateStr());
+    function timeLabel() {
+      var now = new Date();
+      var hh = String(now.getHours()).padStart(2,'0');
+      var mm = String(now.getMinutes()).padStart(2,'0');
+      return hh + ':' + mm;
     }
 
     function updateDateHeaders() {
-      const label = todayLabel();
-      document.getElementById('hdr-date-1').textContent = label;
-      document.getElementById('hdr-date-2').textContent = label;
-      document.getElementById('today-date-txt').textContent = label;
+      var label = fmtDate(localDateStr());
+      var time  = timeLabel();
+      ['hdr-date-home','hdr-date-select','today-date-txt'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = label;
+      });
+      ['hdr-time-home','hdr-time-select'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = time;
+      });
     }
 
     // ---- Toast ----
     function showToast(msg) {
-      const t = document.getElementById('toast');
+      var t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2400);
+      setTimeout(function() { t.classList.remove('show'); }, 2400);
     }
 
     // ---- Confetti ----
     function burst(cx, cy) {
-      for (let i = 0; i < 24; i++) {
-        const el = document.createElement('div');
+      for (var i = 0; i < 24; i++) {
+        var el = document.createElement('div');
         el.className = 'confetti-piece';
-        el.style.cssText = `
-          left:${cx + (Math.random()-0.5)*140}px;
-          top:${cy + (Math.random()-0.5)*80}px;
-          background:${CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)]};
-          width:${5+Math.random()*8}px;
-          height:${5+Math.random()*8}px;
-          animation-duration:${0.7+Math.random()*0.65}s;
-          animation-delay:${Math.random()*0.2}s;
-        `;
+        el.style.cssText = 'left:' + (cx+(Math.random()-.5)*140) + 'px;' +
+          'top:' + (cy+(Math.random()-.5)*80) + 'px;' +
+          'background:' + CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)] + ';' +
+          'width:' + (5+Math.random()*8) + 'px;height:' + (5+Math.random()*8) + 'px;' +
+          'animation-duration:' + (0.7+Math.random()*0.65) + 's;' +
+          'animation-delay:' + (Math.random()*0.2) + 's;';
         document.body.appendChild(el);
-        el.addEventListener('animationend', () => el.remove());
+        el.addEventListener('animationend', function() { el.remove(); });
       }
     }
 
+    // ---- Load data ----
+    async function loadAll() {
+      var results = await Promise.all([fetch('/api/today'), fetch('/api/weekly')]);
+      var todayItems = await results[0].json();
+      weeklyStats = await results[1].json();
+
+      todayDone = {};
+      todayItems.forEach(function(item) { todayDone[item.chore] = item; });
+    }
+
+    // ---- Render home ----
+    function renderWeeklyStrip() {
+      document.getElementById('score-p1').textContent = (weeklyStats.players && weeklyStats.players[P1]) || 0;
+      document.getElementById('score-p2').textContent = (weeklyStats.players && weeklyStats.players[P2]) || 0;
+    }
+
+    function renderChoreGrid() {
+      var grid = document.getElementById('chore-grid');
+      grid.innerHTML = CHORES.map(function(c) {
+        var done   = todayDone[c.name];
+        var cssCls = CHORE_CSS[c.name] || 'chore-litter';
+        var weekCount = (weeklyStats.chores && weeklyStats.chores[c.name]) || 0;
+        var weekLabel = weekCount > 0 ? (weekCount + 'x this week') : '';
+        var topSlot = done
+          ? '<div class="chore-done-hero">&#10003; ' + done.person + '</div>'
+          : '<div class="chore-emoji">' + c.emoji + '</div>';
+        return '<button class="btn-chore ' + cssCls + '" onclick="selectChore(\'' + c.name + '\')">' +
+          topSlot +
+          '<div class="chore-name">' + c.name + '</div>' +
+          '<div class="chore-week-count">' + weekLabel + '</div>' +
+          '</button>';
+      }).join('');
+    }
+
     // ---- Frames ----
-    function showFrame1() {
+    function showHome() {
+      cancelFrame2();
+      renderWeeklyStrip();
+      renderChoreGrid();
+      document.getElementById('frame-home').classList.remove('hidden');
+      document.getElementById('frame-select').classList.add('hidden');
+      document.getElementById('frame-today').classList.add('hidden');
+    }
+
+    function selectChore(name) {
+      var done = todayDone[name];
+      if (done) {
+        showFrame2(name, done);
+        return;
+      }
+      currentChore = name;
+      var chore = CHORES.find(function(c) { return c.name === name; });
+      document.getElementById('chore-header-label').textContent =
+        chore ? (chore.emoji + ' ' + chore.name) : name;
+      document.getElementById('frame-home').classList.add('hidden');
       document.getElementById('frame-select').classList.remove('hidden');
       document.getElementById('frame-today').classList.add('hidden');
     }
 
-    function showFrame2(data) {
-      const p = data.person;
+    function showFrame2(choreName, data) {
+      cancelFrame2();
+      var p = data.person;
 
-      // Avatar chip in header
-      const chip = document.getElementById('avatar-chip');
+      var chip = document.getElementById('avatar-chip');
       chip.textContent = p[0];
       chip.className = 'avatar-chip ' + (p === P2 ? 'chip-mg' : 'chip-jc');
 
-      // Winner name
+      var chore = CHORES.find(function(c) { return c.name === choreName; });
+      document.getElementById('chore-tag').textContent = chore ? (chore.emoji + ' ' + chore.name) : choreName;
       document.getElementById('winner-name').textContent = p;
 
-      // Streak
-      const streakEl = document.getElementById('streak-line');
+      var streakEl = document.getElementById('streak-line');
       if (data.streak >= 1) {
-        streakEl.textContent = `🔥 ${data.streak} day streak`;
+        streakEl.textContent = '🔥 ' + data.streak + ' day streak';
         streakEl.style.display = '';
       } else {
         streakEl.style.display = 'none';
       }
 
-      // Monthly count
-      document.getElementById('monthly-line').textContent =
-        `${data.monthly}/${data.days_in_month} days in ${data.month_name}`;
+      document.getElementById('monthly-line').textContent = data.monthly !== undefined
+        ? (data.monthly + '/' + data.days_in_month + ' times in ' + data.month_name)
+        : '';
 
-      // Sad cat initials (the other person)
       document.getElementById('sad-initials').textContent = '(' + (p === P1 ? P2 : P1) + ')';
 
+      document.getElementById('frame-home').classList.add('hidden');
       document.getElementById('frame-select').classList.add('hidden');
       document.getElementById('frame-today').classList.remove('hidden');
+
+      startFrame2Countdown();
     }
 
-    // ---- Load today's state ----
-    async function loadToday() {
-      const res = await fetch('/api/today');
-      const data = await res.json();
-      if (data.person) {
-        showFrame2(data);
-      } else {
-        showFrame1();
-      }
+    // ---- Frame 2 countdown (10s auto-return) ----
+    var frame2Timer = null;
+
+    function startFrame2Countdown() {
+      var bar = document.getElementById('return-bar');
+      bar.style.transition = 'none';
+      bar.style.width = '100%';
+      bar.getBoundingClientRect();
+      bar.style.transition = 'width 10s linear';
+      bar.style.width = '0%';
+      frame2Timer = setTimeout(goHome, 10000);
     }
 
-    // ---- Record a cleaning ----
+    function cancelFrame2() {
+      clearTimeout(frame2Timer);
+      frame2Timer = null;
+    }
+
+    async function goHome() {
+      await loadAll();
+      showHome();
+    }
+
+    // ---- Record a chore ----
     async function recordClean(person, btn) {
-      const rect = btn.getBoundingClientRect();
-      const res = await fetch('/api/clean', {
+      if (!currentChore) return;
+      var rect = btn.getBoundingClientRect();
+      var res = await fetch('/api/clean', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ person })
+        body: JSON.stringify({ person: person, chore: currentChore })
       });
       if (res.ok) {
-        const data = await res.json();
+        var data = await res.json();
+        todayDone[currentChore] = data;
+        if (weeklyStats.players) weeklyStats.players[person] = (weeklyStats.players[person] || 0) + 1;
+        if (weeklyStats.chores)  weeklyStats.chores[currentChore] = (weeklyStats.chores[currentChore] || 0) + 1;
         burst(rect.left + rect.width/2, rect.top + rect.height/3);
-        showToast('🐱 Logged for ' + person + '!');
-        showFrame2(data);
+        showToast('Logged for ' + person + '!');
+        showFrame2(currentChore, data);
       } else if (res.status === 409) {
         showToast('Already logged today!');
-        loadToday();
+        await loadAll();
+        showHome();
       } else {
         showToast('Something went wrong');
       }
@@ -765,52 +1008,46 @@
 
     // ---- Trophy overlay ----
     async function openTrophy() {
-      const res = await fetch('/api/history');
-      const items = await res.json();
+      var res = await fetch('/api/history');
+      var items = await res.json();
 
-      // Monthly summary
-      const now = new Date();
-      const monthStart = now.getFullYear() + '-' +
-        String(now.getMonth()+1).padStart(2,'0') + '-01';
-      const monthName = now.toLocaleDateString('en-US', { month: 'long' });
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+      var now = new Date();
+      var monthStart = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
+      var monthName = now.toLocaleDateString('en-US', {month:'long'});
+      var daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
 
-      const p1Count = items.filter(i => i.person === P1 && i.date >= monthStart).length;
-      const p2Count = items.filter(i => i.person === P2 && i.date >= monthStart).length;
-      const maxCount = Math.max(p1Count, p2Count, 1);
+      var thisMonth = items.filter(function(i) { return i.date >= monthStart; });
+      var p1Count = thisMonth.filter(function(i) { return i.person === P1; }).length;
+      var p2Count = thisMonth.filter(function(i) { return i.person === P2; }).length;
+      var maxCount = Math.max(p1Count, p2Count, 1);
 
-      const summaryEl = document.getElementById('trophy-summary');
-      summaryEl.innerHTML = `
-        <div class="month-summary-title">${monthName} — ${daysInMonth} days</div>
-        <div class="month-summary-rows">
-          <div class="summary-row">
-            <div class="summary-name">${P2}</div>
-            <div class="summary-bar-track">
-              <div class="summary-bar bar-mg" style="width:${p2Count/maxCount*100}%"></div>
-            </div>
-            <div class="summary-count">${p2Count}</div>
-          </div>
-          <div class="summary-row">
-            <div class="summary-name">${P1}</div>
-            <div class="summary-bar-track">
-              <div class="summary-bar bar-jc" style="width:${p1Count/maxCount*100}%"></div>
-            </div>
-            <div class="summary-count">${p1Count}</div>
-          </div>
-        </div>`;
+      document.getElementById('trophy-summary').innerHTML =
+        '<div class="month-summary-title">' + monthName + ' — ' + daysInMonth + ' days</div>' +
+        '<div class="month-summary-rows">' +
+          '<div class="summary-row">' +
+            '<div class="summary-name">' + P2 + '</div>' +
+            '<div class="summary-bar-track"><div class="summary-bar bar-mg" style="width:' + (p2Count/maxCount*100) + '%"></div></div>' +
+            '<div class="summary-count">' + p2Count + '</div>' +
+          '</div>' +
+          '<div class="summary-row">' +
+            '<div class="summary-name">' + P1 + '</div>' +
+            '<div class="summary-bar-track"><div class="summary-bar bar-jc" style="width:' + (p1Count/maxCount*100) + '%"></div></div>' +
+            '<div class="summary-count">' + p1Count + '</div>' +
+          '</div>' +
+        '</div>';
 
-      // History list
-      const list = document.getElementById('trophy-list');
-      if (!items.length) {
-        list.innerHTML = `<div class="entry-row" style="color:var(--muted)">No cleanings yet — go scoop!</div>`;
-      } else {
-        list.innerHTML = items.map(item => `
-          <div class="entry-row">
-            <div class="entry-dot ${item.person === P2 ? 'dot-mg' : 'dot-jc'}"></div>
-            <div class="entry-person">${item.person}</div>
-            <div class="entry-date">${fmtDate(item.date)}</div>
-          </div>`).join('');
-      }
+      var list = document.getElementById('trophy-list');
+      list.innerHTML = !items.length
+        ? '<div class="entry-row" style="color:var(--muted)">No chores yet!</div>'
+        : items.map(function(item) {
+            return '<div class="entry-row">' +
+              '<div class="entry-dot ' + (item.person===P2?'dot-mg':'dot-jc') + '"></div>' +
+              '<div class="entry-person">' + item.person + '</div>' +
+              '<div class="entry-chore">' + item.chore + '</div>' +
+              '<div class="entry-date">' + fmtDate(item.date) + '</div>' +
+            '</div>';
+          }).join('');
+
       document.getElementById('overlay-trophy').classList.remove('hidden');
     }
 
@@ -821,29 +1058,31 @@
     }
 
     async function renderSettings() {
-      const res = await fetch('/api/history');
-      const items = await res.json();
-      const list = document.getElementById('settings-list');
-      if (!items.length) {
-        list.innerHTML = `<div class="entry-row" style="color:var(--muted)">No cleanings yet!</div>`;
-        return;
-      }
-      list.innerHTML = items.map(item => `
-        <div class="entry-row" id="entry-${item.id}">
-          <div class="entry-dot ${item.person === P2 ? 'dot-mg' : 'dot-jc'}"></div>
-          <div class="entry-person">${item.person}</div>
-          <div class="entry-date">${fmtDate(item.date)}</div>
-          <button class="btn-del" onclick="deleteEntry(${item.id})">🗑</button>
-        </div>`).join('');
+      var res = await fetch('/api/history');
+      var items = await res.json();
+      var list = document.getElementById('settings-list');
+      list.innerHTML = !items.length
+        ? '<div class="entry-row" style="color:var(--muted)">No chores yet!</div>'
+        : items.map(function(item) {
+            return '<div class="entry-row" id="entry-' + item.id + '">' +
+              '<div class="entry-dot ' + (item.person===P2?'dot-mg':'dot-jc') + '"></div>' +
+              '<div class="entry-person">' + item.person + '</div>' +
+              '<div class="entry-chore">' + item.chore + '</div>' +
+              '<div class="entry-date">' + fmtDate(item.date) + '</div>' +
+              '<button class="btn-del" onclick="deleteEntry(' + item.id + ')">X</button>' +
+            '</div>';
+          }).join('');
     }
 
     async function deleteEntry(id) {
-      const res = await fetch(`/api/clean/${id}`, { method: 'DELETE' });
+      var res = await fetch('/api/clean/' + id, {method:'DELETE'});
       if (res.ok) {
-        const el = document.getElementById(`entry-${id}`);
+        var el = document.getElementById('entry-' + id);
         if (el) el.remove();
         showToast('Entry removed');
-        loadToday();  // might need to switch frames if we deleted today
+        await loadAll();
+        renderChoreGrid();
+        renderWeeklyStrip();
       }
     }
 
@@ -851,7 +1090,6 @@
       document.getElementById(id).classList.add('hidden');
     }
 
-    // Close overlay when tapping the dark backdrop (not the sheet itself)
     document.getElementById('overlay-trophy').addEventListener('click', function(e) {
       if (e.target === this) closeOverlay('overlay-trophy');
     });
@@ -860,59 +1098,175 @@
     });
 
     // ---- Reset ----
-    function confirmReset() {
-      document.getElementById('modal-confirm').classList.remove('hidden');
-    }
-    function closeConfirm() {
-      document.getElementById('modal-confirm').classList.add('hidden');
-    }
+    function confirmReset() { document.getElementById('modal-confirm').classList.remove('hidden'); }
+    function closeConfirm()  { document.getElementById('modal-confirm').classList.add('hidden'); }
+
     async function doReset() {
       closeConfirm();
       closeOverlay('overlay-settings');
-      const res = await fetch('/api/reset', { method: 'POST' });
-      if (res.ok) { showToast('🗑 Scores cleared!'); loadToday(); }
+      var res = await fetch('/api/reset', {method:'POST'});
+      if (res.ok) {
+        todayDone = {};
+        weeklyStats = { players: {}, chores: {} };
+        showToast('Scores cleared!');
+        showHome();
+      }
     }
 
-    // ---- Midnight day-change check ----
-    setInterval(() => {
-      const newDay = localDateStr();
+    // ---- Midnight check ----
+    setInterval(async function() {
+      var newDay = localDateStr();
       if (newDay !== currentDay) {
         currentDay = newDay;
         updateDateHeaders();
-        loadToday();
+        await loadAll();
+        showHome();
       }
     }, 60000);
 
-    // ---- Sleep mode ----
-    const SLEEP_MS = 90000;
-    const sleepEl = document.getElementById('sleep-overlay');
-    let sleepTimer;
+    // ============================================================
+    // SLEEP / SCREENSAVER
+    // ============================================================
+    var SLEEP_MS   = 120000;
+    var sleepEl    = document.getElementById('sleep-overlay');
+    var sleepDay   = document.getElementById('sleep-day');
+    var sleepNight = document.getElementById('sleep-night');
+    var sleepTimer = null;
+    var bounceItems = [];
+    var bounceTimer = null;
+
+    function isNight() {
+      var h = new Date().getHours();
+      return h >= 23 || h < 7;
+    }
+
+    function updateNightClock() {
+      var now = new Date();
+      var hh = String(now.getHours()).padStart(2,'0');
+      var mm = String(now.getMinutes()).padStart(2,'0');
+      document.getElementById('sleep-time-night').textContent = hh + ':' + mm;
+      document.getElementById('sleep-date-night').textContent = fmtDate(localDateStr());
+    }
+
+    // -- Bouncing emojis --
+    function initBounceEmojis() {
+      sleepDay.innerHTML = '';
+      bounceItems = [];
+      var size = Math.max(40, Math.round(window.innerWidth * 0.12));
+      CHORES.forEach(function(c) {
+        var el = document.createElement('div');
+        el.className = 'bounce-emoji';
+        el.textContent = c.emoji;
+        sleepDay.appendChild(el);
+        bounceItems.push({
+          el: el,
+          size: size,
+          x: Math.random() * Math.max(1, window.innerWidth - size),
+          y: Math.random() * Math.max(1, window.innerHeight - size),
+          vx: (1.2 + Math.random() * 0.8) * (Math.random() > 0.5 ? 1 : -1),
+          vy: (1.2 + Math.random() * 0.8) * (Math.random() > 0.5 ? 1 : -1),
+        });
+      });
+    }
+
+    function stepBounce() {
+      var W = window.innerWidth, H = window.innerHeight;
+      bounceItems.forEach(function(b) {
+        b.x += b.vx;
+        b.y += b.vy;
+        if (b.x <= 0)        { b.vx =  Math.abs(b.vx); b.x = 0; }
+        if (b.x >= W-b.size) { b.vx = -Math.abs(b.vx); b.x = W-b.size; }
+        if (b.y <= 0)        { b.vy =  Math.abs(b.vy); b.y = 0; }
+        if (b.y >= H-b.size) { b.vy = -Math.abs(b.vy); b.y = H-b.size; }
+        b.el.style.left = b.x + 'px';
+        b.el.style.top  = b.y + 'px';
+      });
+    }
+
+    function startBounce() {
+      (function tick() {
+        stepBounce();
+        bounceTimer = setTimeout(function() { requestAnimationFrame(tick); }, 80);
+      })();
+    }
+
+    function stopBounce() {
+      clearTimeout(bounceTimer);
+      bounceTimer = null;
+    }
+
+    // -- Activate / deactivate --
+    function activateSleep() {
+      var night = isNight();
+      if (night) {
+        stopBounce();
+        sleepDay.style.display   = 'none';
+        sleepNight.style.display = 'flex';
+        updateNightClock();
+      } else {
+        sleepNight.style.display = 'none';
+        sleepDay.style.display   = 'block';
+        initBounceEmojis();
+        startBounce();
+      }
+      sleepEl.classList.add('show');
+    }
+
+    function deactivateSleep() {
+      sleepEl.classList.remove('show');
+      stopBounce();
+    }
 
     function resetSleep() {
       clearTimeout(sleepTimer);
-      sleepTimer = setTimeout(() => sleepEl.classList.add('show'), SLEEP_MS);
+      sleepTimer = setTimeout(activateSleep, SLEEP_MS);
     }
+
+    // Re-evaluate day/night every minute while sleeping
+    setInterval(function() {
+      if (!sleepEl.classList.contains('show')) return;
+      var night = isNight();
+      var currentlyNight = sleepNight.style.display === 'flex';
+      if (night === currentlyNight) {
+        if (night) updateNightClock();
+        return;
+      }
+      if (night) {
+        stopBounce();
+        sleepDay.style.display   = 'none';
+        sleepNight.style.display = 'flex';
+        updateNightClock();
+      } else {
+        sleepNight.style.display = 'none';
+        sleepDay.style.display   = 'block';
+        initBounceEmojis();
+        startBounce();
+      }
+    }, 60000);
 
     sleepEl.addEventListener('touchstart', function(e) {
       if (sleepEl.classList.contains('show')) {
         e.preventDefault();
         e.stopPropagation();
-        sleepEl.classList.remove('show');
+        deactivateSleep();
         resetSleep();
       }
     }, { passive: false });
+
     sleepEl.addEventListener('click', function() {
-      sleepEl.classList.remove('show');
-      resetSleep();
+      if (sleepEl.classList.contains('show')) {
+        deactivateSleep();
+        resetSleep();
+      }
     });
 
     document.addEventListener('touchstart', resetSleep, { passive: true });
     document.addEventListener('click', resetSleep);
-    resetSleep();
 
     // ---- Boot ----
     updateDateHeaders();
-    loadToday();
+    resetSleep();
+    loadAll().then(function() { showHome(); });
     setInterval(updateDateHeaders, 60000);
   </script>
 </body>

@@ -1,14 +1,17 @@
-# LitteBox Cleaning Tracker 🐱
+# ChoreWars
 
-A litter box cleaning tracker built for two people, running as a touchscreen kiosk on a Raspberry Pi. Tap your button when you clean, see streaks, monthly counts, and a running history — all on a wall-mounted display.
+A home chore tracker built for two people, running as a touchscreen kiosk on a Raspberry Pi. Tap a chore, tap your name — see who's winning the week.
 
 ## How it works
 
-- **One cleaning per day.** Whoever taps their button first claims that day.
-- **Main Screen** shows two large buttons (one per person). Tap yours when you scoop.
-- **Secondary Screen** replaces the buttons for the rest of the day — shows who cleaned, their streak, and monthly count. Resets automatically at midnight.
-- **★ History** button shows a monthly summary with progress bars and a full log.
-- **⚙️ Settings** button lets you delete a mistaken entry or reset all scores.
+- **Home screen** shows all chores (Litter Box, Dishes, Laundry, Bathroom, Vacuum, Trash) plus a weekly score for each person.
+- **Tap a chore** → pick who did it (JC or MG).
+- **Celebration screen** shows a 10-second confirmation, then returns home automatically.
+- **Done chores** show `✓ Person` in place of the icon so you can see at a glance what's left.
+- **Weekly strip** at the top tracks total chores done by each person since Monday.
+- **★ History** shows a monthly summary with progress bars and a full log with chore labels.
+- **⚙️ Settings** lets you delete a mistaken entry or reset all scores.
+- **Screensaver** kicks in after 2 minutes idle — bouncing emojis during the day, near-black clock at night (11 pm – 7 am).
 
 ---
 
@@ -84,8 +87,8 @@ pip3 install flask
 ### 5. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/LitterBoxTracker.git
-cd LitterBoxTracker
+git clone https://github.com/your-username/ChoreWars.git
+cd ChoreWars
 ```
 
 ### 6. Configure player names
@@ -110,17 +113,17 @@ Open `http://localhost:5050` on any browser on the same network to verify.
 
 ## Autostart on boot (systemd)
 
-Create `/etc/systemd/system/LitterBoxTracker.service`:
+Create `/etc/systemd/system/chorewars.service`:
 
 ```ini
 [Unit]
-Description=LitterBoxTracker App
+Description=ChoreWars App
 After=network.target
 
 [Service]
 User=YOUR_USERNAME
-WorkingDirectory=/home/YOUR_USERNAME/LitterBoxTracker
-ExecStart=/usr/bin/python3 /home/YOUR_USERNAME/LitterBoxTracker/app.py
+WorkingDirectory=/home/YOUR_USERNAME/ChoreWars
+ExecStart=/usr/bin/python3 /home/YOUR_USERNAME/ChoreWars/app.py
 Restart=always
 RestartSec=5
 
@@ -128,20 +131,20 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-Create `/etc/systemd/system/LitterBoxTracker-kiosk.service`:
+Create `/etc/systemd/system/chorewars-kiosk.service`:
 
 ```ini
 [Unit]
-Description=LitterBoxTracker Kiosk
-After=graphical.target LitterBoxTracker.service
-Requires=LitterBoxTracker.service
+Description=ChoreWars Kiosk
+After=graphical.target chorewars.service
+Requires=chorewars.service
 
 [Service]
 User=YOUR_USERNAME
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/YOUR_USERNAME/.Xauthority
 ExecStartPre=/bin/sleep 5
-ExecStart=/bin/bash /home/YOUR_USERNAME/LitterBoxTracker/kiosk.sh
+ExecStart=/bin/bash /home/YOUR_USERNAME/ChoreWars/kiosk.sh
 Restart=always
 RestartSec=10
 
@@ -153,8 +156,8 @@ Enable and start:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable LitterBoxTracker.service LitterBoxTracker-kiosk.service
-sudo systemctl start LitterBoxTracker.service LitterBoxTracker-kiosk.service
+sudo systemctl enable chorewars.service chorewars-kiosk.service
+sudo systemctl start chorewars.service chorewars-kiosk.service
 ```
 
 ---
@@ -176,9 +179,10 @@ This gives a CSS viewport of approximately **492×738**, which all sizing in the
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/today` | Today's cleaning record, streak, monthly count |
-| `POST` | `/api/clean` | Record today's cleaning (one per day) |
-| `GET` | `/api/history` | All cleanings, newest first |
+| `GET` | `/api/today` | All chores completed today with streak and monthly stats |
+| `POST` | `/api/clean` | Record a chore (`person` + `chore` in JSON body) |
+| `GET` | `/api/weekly` | Weekly totals per person and per chore (Mon–Sun) |
+| `GET` | `/api/history` | All records, newest first, with chore label |
 | `DELETE` | `/api/clean/<id>` | Delete a specific entry by ID |
 | `POST` | `/api/reset` | Delete all records |
 
@@ -187,7 +191,7 @@ This gives a CSS viewport of approximately **492×738**, which all sizing in the
 ## Project structure
 
 ```
-LitterBoxTracker/
+ChoreWars/
 ├── app.py              # Flask app and SQLite logic
 ├── kiosk.sh            # Launches Chromium in kiosk mode
 ├── start.sh            # Installs deps and starts Flask
