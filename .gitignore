@@ -16,3 +16,5 @@ tmp/
 
 # Systemd service files (local to each Pi)
 *.service
+
+*.superpowers
