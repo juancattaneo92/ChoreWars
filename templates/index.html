@@ -629,6 +629,31 @@
       0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
       100% { opacity: 0; transform: translateY(220px) rotate(720deg); }
     }
+
+    /* ============================================================
+       ATTENTION INDICATOR
+    ============================================================ */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(239,68,68,0.6), 0 0 18px rgba(239,68,68,0.4); }
+      50%       { box-shadow: 0 0 0 3px rgba(239,68,68,0.9), 0 0 30px rgba(239,68,68,0.65); }
+    }
+    .alert-glow {
+      animation: pulseGlow 1.8s ease-in-out infinite;
+      outline: 2px solid rgba(239,68,68,0.7);
+    }
+    .days-chip {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      background: rgba(239,68,68,0.92);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 900;
+      border-radius: 8px;
+      padding: 2px 6px;
+      line-height: 1.4;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -791,6 +816,9 @@
     // Chores that can be logged multiple times per day
     const MULTI_PER_DAY = new Set(["Dishes", "Laundry", "Trash"]);
 
+    // Days threshold before showing attention indicator
+    const CHORE_THRESHOLDS = { "Litter Box": 3, "Vacuum": 3, "Bathroom": 7 };
+
     const CHORE_CSS = {
       "Litter Box": "chore-litter",
       "Dishes":     "chore-dishes",
@@ -805,6 +833,7 @@
     let todayDone    = {};   // chore name → last logged entry (for once-per-day display)
     let todayCount   = {};   // chore name → number of times logged today
     let weeklyStats  = { players: {}, chores: {} };
+    let choreStatus  = { firstRecordDate: null, chores: {} };
 
     // ---- Date helpers ----
     function localDateStr() {
@@ -845,6 +874,32 @@
       });
     }
 
+    // ---- Overdue helpers ----
+    function isOverdue(choreName) {
+      var threshold = CHORE_THRESHOLDS[choreName];
+      if (!threshold) return false;
+      var status = choreStatus.chores[choreName];
+      if (!status) return false;
+      if (status.daysSince !== null && status.daysSince !== undefined) {
+        return status.daysSince >= threshold;
+      }
+      // Never logged — grace period from first-ever DB record
+      if (!choreStatus.firstRecordDate) return false;
+      var today = new Date();
+      var first = new Date(choreStatus.firstRecordDate + 'T00:00:00');
+      var daysSinceFirst = Math.floor((today - first) / 86400000);
+      return daysSinceFirst >= threshold;
+    }
+
+    function overdueChipLabel(choreName) {
+      var status = choreStatus.chores[choreName];
+      if (!status) return '';
+      if (status.daysSince !== null && status.daysSince !== undefined) {
+        return status.daysSince + 'd ago';
+      }
+      return 'never';
+    }
+
     // ---- Toast ----
     function showToast(msg) {
       var t = document.getElementById('toast');
@@ -871,15 +926,25 @@
 
     // ---- Load data ----
     async function loadAll() {
-      var results = await Promise.all([fetch('/api/today'), fetch('/api/weekly')]);
+      var results = await Promise.all([
+        fetch('/api/today'),
+        fetch('/api/weekly'),
+        fetch('/api/chore-status'),
+      ]);
       var todayItems = await results[0].json();
-      weeklyStats = await results[1].json();
+      weeklyStats    = await results[1].json();
+      var statusData = await results[2].json();
 
       todayDone  = {};
       todayCount = {};
       todayItems.forEach(function(item) {
         todayDone[item.chore] = item;
         todayCount[item.chore] = (todayCount[item.chore] || 0) + 1;
+      });
+
+      choreStatus = { firstRecordDate: statusData.first_record_date, chores: {} };
+      Object.keys(statusData.chores).forEach(function(name) {
+        choreStatus.chores[name] = { daysSince: statusData.chores[name].days_since };
       });
     }
 
@@ -898,6 +963,7 @@
         var cssCls    = CHORE_CSS[c.name] || 'chore-litter';
         var weekCount = (weeklyStats.chores && weeklyStats.chores[c.name]) || 0;
         var weekLabel = weekCount > 0 ? (weekCount + 'x this week') : '';
+        var overdue   = isOverdue(c.name);
         var topSlot;
         if (isMulti && count > 0) {
           // Multi-per-day: show how many times done today, still tappable
@@ -908,7 +974,9 @@
         } else {
           topSlot = '<div class="chore-emoji">' + c.emoji + '</div>';
         }
-        return '<button class="btn-chore ' + cssCls + '" onclick="selectChore(\'' + c.name + '\')">' +
+        var chip = overdue ? '<div class="days-chip">' + overdueChipLabel(c.name) + '</div>' : '';
+        return '<button class="btn-chore ' + cssCls + (overdue ? ' alert-glow' : '') + '" onclick="selectChore(\'' + c.name + '\')">' +
+          chip +
           topSlot +
           '<div class="chore-name">' + c.name + '</div>' +
           '<div class="chore-week-count">' + weekLabel + '</div>' +

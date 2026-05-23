@@ -24,6 +24,13 @@ CHORE_NAMES = {c["name"] for c in CHORES}
 # These chores can be logged multiple times per day
 MULTI_PER_DAY_CHORES = {"Dishes", "Laundry", "Trash"}
 
+# Days without cleaning before showing an attention indicator
+CHORE_THRESHOLDS = {
+    "Litter Box": 3,
+    "Vacuum":     3,
+    "Bathroom":   7,
+}
+
 
 # --- Database ---
 
@@ -193,6 +200,35 @@ def get_weekly():
             chores[r["chore"]] += r["n"]
 
     return jsonify({"players": players, "chores": chores})
+
+@app.route("/api/chore-status", methods=["GET"])
+def get_chore_status():
+    db = get_db()
+    today = today_str()
+
+    first_row = db.execute(
+        "SELECT MIN(cleaned_date) as first_date FROM cleanings"
+    ).fetchone()
+    first_record_date = first_row["first_date"] if first_row["first_date"] else None
+
+    chores = {}
+    for chore_name in CHORE_THRESHOLDS:
+        row = db.execute(
+            "SELECT MAX(cleaned_date) as last_date FROM cleanings WHERE chore = ?",
+            (chore_name,)
+        ).fetchone()
+        last_date = row["last_date"] if row["last_date"] else None
+
+        if last_date:
+            d1 = datetime.strptime(today, "%Y-%m-%d")
+            d2 = datetime.strptime(last_date, "%Y-%m-%d")
+            days_since = (d1 - d2).days
+        else:
+            days_since = None
+
+        chores[chore_name] = {"last_date": last_date, "days_since": days_since}
+
+    return jsonify({"first_record_date": first_record_date, "chores": chores})
 
 @app.route("/api/clean/<int:entry_id>", methods=["DELETE"])
 def delete_clean(entry_id):
