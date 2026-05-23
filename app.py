@@ -21,6 +21,9 @@ CHORES = [
 ]
 CHORE_NAMES = {c["name"] for c in CHORES}
 
+# These chores can be logged multiple times per day
+MULTI_PER_DAY_CHORES = {"Dishes", "Laundry", "Trash"}
+
 
 # --- Database ---
 
@@ -133,12 +136,15 @@ def record_clean():
 
     db = get_db()
     today = today_str()
-    existing = db.execute(
-        "SELECT person FROM cleanings WHERE cleaned_date = ? AND chore = ?",
-        (today, chore)
-    ).fetchone()
-    if existing:
-        return jsonify({"error": "Already done today", "person": existing["person"]}), 409
+
+    # Once-per-day chores: block if already logged today by anyone
+    if chore not in MULTI_PER_DAY_CHORES:
+        existing = db.execute(
+            "SELECT person FROM cleanings WHERE cleaned_date = ? AND chore = ?",
+            (today, chore)
+        ).fetchone()
+        if existing:
+            return jsonify({"error": "Already done today", "person": existing["person"]}), 409
 
     db.execute(
         "INSERT INTO cleanings (person, chore, cleaned_date, cleaned_at) VALUES (?, ?, ?, ?)",

@@ -788,6 +788,9 @@
     const CHORES = {{ chores | safe }};
     const CONFETTI_COLORS = ["#a855f7","#f472b6","#818cf8","#34d399","#fbbf24","#f87171","#60a5fa"];
 
+    // Chores that can be logged multiple times per day
+    const MULTI_PER_DAY = new Set(["Dishes", "Laundry", "Trash"]);
+
     const CHORE_CSS = {
       "Litter Box": "chore-litter",
       "Dishes":     "chore-dishes",
@@ -799,7 +802,8 @@
 
     let currentDay   = localDateStr();
     let currentChore = null;
-    let todayDone    = {};
+    let todayDone    = {};   // chore name → last logged entry (for once-per-day display)
+    let todayCount   = {};   // chore name → number of times logged today
     let weeklyStats  = { players: {}, chores: {} };
 
     // ---- Date helpers ----
@@ -871,8 +875,12 @@
       var todayItems = await results[0].json();
       weeklyStats = await results[1].json();
 
-      todayDone = {};
-      todayItems.forEach(function(item) { todayDone[item.chore] = item; });
+      todayDone  = {};
+      todayCount = {};
+      todayItems.forEach(function(item) {
+        todayDone[item.chore] = item;
+        todayCount[item.chore] = (todayCount[item.chore] || 0) + 1;
+      });
     }
 
     // ---- Render home ----
@@ -884,13 +892,22 @@
     function renderChoreGrid() {
       var grid = document.getElementById('chore-grid');
       grid.innerHTML = CHORES.map(function(c) {
-        var done   = todayDone[c.name];
-        var cssCls = CHORE_CSS[c.name] || 'chore-litter';
+        var done      = todayDone[c.name];
+        var count     = todayCount[c.name] || 0;
+        var isMulti   = MULTI_PER_DAY.has(c.name);
+        var cssCls    = CHORE_CSS[c.name] || 'chore-litter';
         var weekCount = (weeklyStats.chores && weeklyStats.chores[c.name]) || 0;
         var weekLabel = weekCount > 0 ? (weekCount + 'x this week') : '';
-        var topSlot = done
-          ? '<div class="chore-done-hero">&#10003; ' + done.person + '</div>'
-          : '<div class="chore-emoji">' + c.emoji + '</div>';
+        var topSlot;
+        if (isMulti && count > 0) {
+          // Multi-per-day: show how many times done today, still tappable
+          topSlot = '<div class="chore-done-hero">&#10003; ' + count + 'x</div>';
+        } else if (!isMulti && done) {
+          // Once-per-day: show who did it
+          topSlot = '<div class="chore-done-hero">&#10003; ' + done.person + '</div>';
+        } else {
+          topSlot = '<div class="chore-emoji">' + c.emoji + '</div>';
+        }
         return '<button class="btn-chore ' + cssCls + '" onclick="selectChore(\'' + c.name + '\')">' +
           topSlot +
           '<div class="chore-name">' + c.name + '</div>' +
@@ -910,8 +927,10 @@
     }
 
     function selectChore(name) {
-      var done = todayDone[name];
-      if (done) {
+      var done    = todayDone[name];
+      var isMulti = MULTI_PER_DAY.has(name);
+      // Once-per-day chores: if already done, show the celebration screen
+      if (done && !isMulti) {
         showFrame2(name, done);
         return;
       }
@@ -991,7 +1010,8 @@
       });
       if (res.ok) {
         var data = await res.json();
-        todayDone[currentChore] = data;
+        todayDone[currentChore]  = data;
+        todayCount[currentChore] = (todayCount[currentChore] || 0) + 1;
         if (weeklyStats.players) weeklyStats.players[person] = (weeklyStats.players[person] || 0) + 1;
         if (weeklyStats.chores)  weeklyStats.chores[currentChore] = (weeklyStats.chores[currentChore] || 0) + 1;
         burst(rect.left + rect.width/2, rect.top + rect.height/3);
