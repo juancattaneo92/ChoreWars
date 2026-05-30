@@ -11,6 +11,9 @@ xset -dpms
 xset s noblank
 unclutter -idle 0.1 -root &
 
+# Fix touchscreen orientation to match portrait display rotation
+xinput set-prop 'raspberrypi-ts' 'Coordinate Transformation Matrix' 0 1 0 -1 0 1 0 0 1
+
 # Launch Chromium in kiosk mode pointed at our local server
 chromium-browser \
   --kiosk \
