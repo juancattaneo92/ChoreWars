@@ -14,8 +14,7 @@ unclutter -idle 0.1 -root &
 # Launch Chromium in kiosk mode pointed at our local server
 chromium-browser \
   --kiosk \
-  --window-size=480,320 \
-  --force-device-scale-factor=0.65 \
+  --window-size=480,800 \
   --noerrdialogs \
   --disable-infobars \
   --disable-session-crashed-bubble \

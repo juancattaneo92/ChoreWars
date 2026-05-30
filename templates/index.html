@@ -216,12 +216,45 @@
     .chore-name       { font-size: min(4.5vw, 3vh); font-weight: 900; color: #fff; }
     .chore-week-count { font-size: min(3.6vw, 2.5vh); font-weight: 700; color: rgba(255,255,255,0.65); }
 
+    /* ============================================================
+       TAB BAR
+    ============================================================ */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      flex: 1;
+      border: none;
+      border-radius: 9px;
+      padding: min(1.2vh, 8px) 4px;
+      font-family: inherit;
+      font-size: min(4vw, 2.8vh);
+      font-weight: 900;
+      cursor: pointer;
+      color: rgba(255,255,255,0.45);
+      background: transparent;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab-btn.tab-active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
     .chore-litter   { background: linear-gradient(160deg,#5b21b6,#9333ea); box-shadow: 0 6px 24px rgba(147,51,234,0.38); }
     .chore-dishes   { background: linear-gradient(160deg,#0f766e,#14b8a6); box-shadow: 0 6px 24px rgba(20,184,166,0.38); }
     .chore-laundry  { background: linear-gradient(160deg,#1d4ed8,#3b82f6); box-shadow: 0 6px 24px rgba(59,130,246,0.38); }
     .chore-bathroom { background: linear-gradient(160deg,#3730a3,#6366f1); box-shadow: 0 6px 24px rgba(99,102,241,0.38); }
     .chore-vacuum   { background: linear-gradient(160deg,#92400e,#f59e0b); box-shadow: 0 6px 24px rgba(245,158,11,0.38); }
     .chore-trash    { background: linear-gradient(160deg,#166534,#22c55e); box-shadow: 0 6px 24px rgba(34,197,94,0.38); }
+    .chore-patio    { background: linear-gradient(160deg,#854d0e,#ca8a04); box-shadow: 0 6px 24px rgba(202,138,4,0.38); }
+    .chore-cooking  { background: linear-gradient(160deg,#9f1239,#f43f5e); box-shadow: 0 6px 24px rgba(244,63,94,0.38); }
 
     /* ============================================================
        FRAME 1 — Player buttons
@@ -544,6 +577,18 @@
     .btn-confirm { background: linear-gradient(135deg, #dc2626, #f87171); color: #fff; }
 
     /* ============================================================
+       HABIT BUTTON COLORS
+    ============================================================ */
+    .habit-run     { background: linear-gradient(160deg,#065f46,#10b981); box-shadow: 0 6px 24px rgba(16,185,129,0.38); }
+    .habit-yoga    { background: linear-gradient(160deg,#4c1d95,#8b5cf6); box-shadow: 0 6px 24px rgba(139,92,246,0.38); }
+    .habit-weights { background: linear-gradient(160deg,#7c2d12,#f97316); box-shadow: 0 6px 24px rgba(249,115,22,0.38); }
+    .habit-sports  { background: linear-gradient(160deg,#1e3a8a,#3b82f6); box-shadow: 0 6px 24px rgba(59,130,246,0.38); }
+    .habit-read    { background: linear-gradient(160deg,#713f12,#eab308); box-shadow: 0 6px 24px rgba(234,179,8,0.38); }
+    .habit-noalc   { background: linear-gradient(160deg,#1f2937,#6b7280); box-shadow: 0 6px 24px rgba(107,114,128,0.38); }
+    .habit-water   { background: linear-gradient(160deg,#0c4a6e,#0ea5e9); box-shadow: 0 6px 24px rgba(14,165,233,0.38); }
+    .habit-nojunk  { background: linear-gradient(160deg,#14532d,#86efac); box-shadow: 0 6px 24px rgba(134,239,172,0.38); }
+
+    /* ============================================================
        SLEEP OVERLAY
     ============================================================ */
     #sleep-overlay {
@@ -647,7 +692,7 @@
       right: 7px;
       background: rgba(239,68,68,0.92);
       color: #fff;
-      font-size: 9px;
+      font-size: min(2.8vw, 1.8vh);
       font-weight: 900;
       border-radius: 8px;
       padding: 2px 6px;
@@ -662,14 +707,18 @@
        FRAME 0 — Home (chore grid)
   ============================================================ -->
   <div id="frame-home" class="frame">
+    <div class="tab-bar">
+      <button class="tab-btn tab-active" data-tab="chores" onclick="switchTab('chores')">🏠 Chores</button>
+      <button class="tab-btn" data-tab="habits" onclick="switchTab('habits')">🌱 Habits</button>
+    </div>
     <div class="header">
       <div class="date-block">
         <div class="date-label" id="hdr-date-home"></div>
         <div class="time-label" id="hdr-time-home"></div>
       </div>
       <div class="header-right">
-        <button class="icon-btn" onclick="openTrophy()"><i class="icon-star">&#9733;</i></button>
-        <button class="icon-btn" onclick="openSettings()">&#9881;&#65039;</button>
+        <button class="icon-btn" onclick="openTrophyForTab()"><i class="icon-star">&#9733;</i></button>
+        <button class="icon-btn" onclick="openSettingsForTab()">&#9881;&#65039;</button>
       </div>
     </div>
     <div class="weekly-strip">
@@ -779,12 +828,42 @@
   </div>
 
   <!-- ============================================================
+       HABIT TROPHY OVERLAY
+  ============================================================ -->
+  <div id="overlay-habit-trophy" class="overlay hidden">
+    <div class="overlay-sheet">
+      <div class="sheet-header">
+        <span>&#9733; Habit History</span>
+        <button class="close-btn" onclick="closeOverlay('overlay-habit-trophy')">X</button>
+      </div>
+      <div class="month-summary" id="habit-trophy-summary"></div>
+      <div class="sheet-list" id="habit-trophy-list"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       HABIT SETTINGS OVERLAY
+  ============================================================ -->
+  <div id="overlay-habit-settings" class="overlay hidden">
+    <div class="overlay-sheet">
+      <div class="sheet-header">
+        <span>&#9881; Habit Settings</span>
+        <button class="close-btn" onclick="closeOverlay('overlay-habit-settings')">X</button>
+      </div>
+      <div class="sheet-list" id="habit-settings-list"></div>
+      <div class="sheet-footer">
+        <button class="btn-reset-all" onclick="confirmHabitReset()">Reset all habits</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
        CONFIRM MODAL
   ============================================================ -->
   <div id="modal-confirm" class="modal-bg hidden">
     <div class="modal">
       <h2>Reset everything?</h2>
-      <p>All chore records will be deleted permanently.</p>
+      <p id="modal-confirm-text">All chore records will be deleted permanently.</p>
       <div class="modal-btns">
         <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
         <button class="btn-confirm" onclick="doReset()">Yes, reset</button>
@@ -814,7 +893,7 @@
     const CONFETTI_COLORS = ["#a855f7","#f472b6","#818cf8","#34d399","#fbbf24","#f87171","#60a5fa"];
 
     // Chores that can be logged multiple times per day
-    const MULTI_PER_DAY = new Set(["Dishes", "Laundry", "Trash"]);
+    const MULTI_PER_DAY = new Set(["Dishes", "Laundry", "Trash", "Cooking"]);
 
     // Days threshold before showing attention indicator
     const CHORE_THRESHOLDS = { "Litter Box": 3, "Vacuum": 3, "Bathroom": 7 };
@@ -826,14 +905,132 @@
       "Bathroom":   "chore-bathroom",
       "Vacuum":     "chore-vacuum",
       "Trash":      "chore-trash",
+      "Patio":      "chore-patio",
+      "Cooking":    "chore-cooking",
     };
 
-    let currentDay   = localDateStr();
-    let currentChore = null;
-    let todayDone    = {};   // chore name → last logged entry (for once-per-day display)
-    let todayCount   = {};   // chore name → number of times logged today
-    let weeklyStats  = { players: {}, chores: {} };
-    let choreStatus  = { firstRecordDate: null, chores: {} };
+    const HABITS = {{ habits | safe }};
+
+    const HABIT_CSS = {
+      "Running":        "habit-run",
+      "Yoga":           "habit-yoga",
+      "Weights":        "habit-weights",
+      "Sports":         "habit-sports",
+      "Reading":        "habit-read",
+      "No Alcohol":     "habit-noalc",
+      "Drinking Water": "habit-water",
+      "No Junk Food":   "habit-nojunk",
+    };
+
+    let currentTab = "chores";
+    let currentDay      = localDateStr();
+    let currentChore    = null;
+    let isHabitMode     = false;
+    let todayDone       = {};
+    let todayCount      = {};
+    let weeklyStats     = { players: {}, chores: {} };
+    let choreStatus     = { firstRecordDate: null, chores: {} };
+    let habitTodayCount = {};
+    let habitWeekly     = { players: {} };
+
+    // ---- Habit overlays ----
+    async function openHabitTrophy() {
+      var res   = await fetch('/api/habits/history');
+      var items = await res.json();
+      var now         = new Date();
+      var monthStart  = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
+      var monthName   = now.toLocaleDateString('en-US', {month:'long'});
+      var daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+      var thisMonth = items.filter(function(i) { return i.date >= monthStart; });
+      var p1Count   = thisMonth.filter(function(i) { return i.person === P1; }).length;
+      var p2Count   = thisMonth.filter(function(i) { return i.person === P2; }).length;
+      var maxCount  = Math.max(p1Count, p2Count, 1);
+      document.getElementById('habit-trophy-summary').innerHTML =
+        '<div class="month-summary-title">' + monthName + ' — ' + daysInMonth + ' days</div>' +
+        '<div class="month-summary-rows">' +
+          '<div class="summary-row">' +
+            '<div class="summary-name">' + P2 + '</div>' +
+            '<div class="summary-bar-track"><div class="summary-bar bar-mg" style="width:' + (p2Count/maxCount*100) + '%"></div></div>' +
+            '<div class="summary-count">' + p2Count + '</div>' +
+          '</div>' +
+          '<div class="summary-row">' +
+            '<div class="summary-name">' + P1 + '</div>' +
+            '<div class="summary-bar-track"><div class="summary-bar bar-jc" style="width:' + (p1Count/maxCount*100) + '%"></div></div>' +
+            '<div class="summary-count">' + p1Count + '</div>' +
+          '</div>' +
+        '</div>';
+      document.getElementById('habit-trophy-list').innerHTML = !items.length
+        ? '<div class="entry-row" style="color:var(--muted)">No habits logged yet!</div>'
+        : items.map(function(item) {
+            return '<div class="entry-row">' +
+              '<div class="entry-dot ' + (item.person===P2?'dot-mg':'dot-jc') + '"></div>' +
+              '<div class="entry-person">' + item.person + '</div>' +
+              '<div class="entry-chore">'  + item.habit  + '</div>' +
+              '<div class="entry-date">'   + fmtDate(item.date) + '</div>' +
+            '</div>';
+          }).join('');
+      document.getElementById('overlay-habit-trophy').classList.remove('hidden');
+    }
+
+    async function openHabitSettings() {
+      await renderHabitSettings();
+      document.getElementById('overlay-habit-settings').classList.remove('hidden');
+    }
+
+    async function renderHabitSettings() {
+      var res   = await fetch('/api/habits/history');
+      var items = await res.json();
+      document.getElementById('habit-settings-list').innerHTML = !items.length
+        ? '<div class="entry-row" style="color:var(--muted)">No habits logged yet!</div>'
+        : items.map(function(item) {
+            return '<div class="entry-row" id="habit-entry-' + item.id + '">' +
+              '<div class="entry-dot ' + (item.person===P2?'dot-mg':'dot-jc') + '"></div>' +
+              '<div class="entry-person">' + item.person + '</div>' +
+              '<div class="entry-chore">'  + item.habit  + '</div>' +
+              '<div class="entry-date">'   + fmtDate(item.date) + '</div>' +
+              '<button class="btn-del" onclick="deleteHabitEntry(' + item.id + ')">X</button>' +
+            '</div>';
+          }).join('');
+    }
+
+    async function deleteHabitEntry(id) {
+      var res = await fetch('/api/habits/' + id, {method:'DELETE'});
+      if (res.ok) {
+        var el = document.getElementById('habit-entry-' + id);
+        if (el) el.remove();
+        showToast('Entry removed');
+        await loadAll();
+        if (currentTab === 'habits') {
+          renderHabitGrid();
+          renderHabitWeeklyStrip();
+        }
+      }
+    }
+
+    // ---- Tab switching ----
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(function(el) {
+        el.classList.toggle('tab-active', el.dataset.tab === tab);
+      });
+      if (tab === 'habits') {
+        renderHabitWeeklyStrip();
+        renderHabitGrid();
+      } else {
+        renderWeeklyStrip();
+        renderChoreGrid();
+      }
+    }
+
+    function openTrophyForTab() {
+      if (currentTab === 'habits') openHabitTrophy();
+      else openTrophy();
+    }
+
+    function openSettingsForTab() {
+      if (currentTab === 'habits') openHabitSettings();
+      else openSettings();
+    }
 
     // ---- Date helpers ----
     function localDateStr() {
@@ -930,10 +1127,14 @@
         fetch('/api/today'),
         fetch('/api/weekly'),
         fetch('/api/chore-status'),
+        fetch('/api/habits/today'),
+        fetch('/api/habits/weekly'),
       ]);
-      var todayItems = await results[0].json();
-      weeklyStats    = await results[1].json();
-      var statusData = await results[2].json();
+      var todayItems      = await results[0].json();
+      weeklyStats         = await results[1].json();
+      var statusData      = await results[2].json();
+      var habitItems      = await results[3].json();
+      var habitWeeklyData = await results[4].json();
 
       todayDone  = {};
       todayCount = {};
@@ -946,6 +1147,13 @@
       Object.keys(statusData.chores).forEach(function(name) {
         choreStatus.chores[name] = { daysSince: statusData.chores[name].days_since };
       });
+
+      habitTodayCount = {};
+      habitItems.forEach(function(item) {
+        habitTodayCount[item.habit] = (habitTodayCount[item.habit] || 0) + 1;
+      });
+
+      habitWeekly = { players: habitWeeklyData.players || {} };
     }
 
     // ---- Render home ----
@@ -984,20 +1192,47 @@
       }).join('');
     }
 
+    function renderHabitWeeklyStrip() {
+      document.getElementById('score-p1').textContent = (habitWeekly.players && habitWeekly.players[P1]) || 0;
+      document.getElementById('score-p2').textContent = (habitWeekly.players && habitWeekly.players[P2]) || 0;
+    }
+
+    function renderHabitGrid() {
+      var grid = document.getElementById('chore-grid');
+      grid.innerHTML = HABITS.map(function(h) {
+        var count  = habitTodayCount[h.name] || 0;
+        var cssCls = HABIT_CSS[h.name] || 'habit-run';
+        var topSlot = count > 0
+          ? '<div class="chore-done-hero">&#10003; ' + count + 'x</div>'
+          : '<div class="chore-emoji">' + h.emoji + '</div>';
+        var weekLabel = count > 0 ? (count + 'x today') : '';
+        return '<button class="btn-chore ' + cssCls + '" onclick="selectHabit(\'' + h.name + '\')">' +
+          topSlot +
+          '<div class="chore-name">' + h.name + '</div>' +
+          '<div class="chore-week-count">' + weekLabel + '</div>' +
+        '</button>';
+      }).join('');
+    }
+
     // ---- Frames ----
     function showHome() {
       cancelFrame2();
-      renderWeeklyStrip();
-      renderChoreGrid();
+      if (currentTab === 'habits') {
+        renderHabitWeeklyStrip();
+        renderHabitGrid();
+      } else {
+        renderWeeklyStrip();
+        renderChoreGrid();
+      }
       document.getElementById('frame-home').classList.remove('hidden');
       document.getElementById('frame-select').classList.add('hidden');
       document.getElementById('frame-today').classList.add('hidden');
     }
 
     function selectChore(name) {
+      isHabitMode = false;
       var done    = todayDone[name];
       var isMulti = MULTI_PER_DAY.has(name);
-      // Once-per-day chores: if already done, show the celebration screen
       if (done && !isMulti) {
         showFrame2(name, done);
         return;
@@ -1011,6 +1246,17 @@
       document.getElementById('frame-today').classList.add('hidden');
     }
 
+    function selectHabit(name) {
+      isHabitMode  = true;
+      currentChore = name;
+      var habit = HABITS.find(function(h) { return h.name === name; });
+      document.getElementById('chore-header-label').textContent =
+        habit ? (habit.emoji + ' ' + habit.name) : name;
+      document.getElementById('frame-home').classList.add('hidden');
+      document.getElementById('frame-select').classList.remove('hidden');
+      document.getElementById('frame-today').classList.add('hidden');
+    }
+
     function showFrame2(choreName, data) {
       cancelFrame2();
       var p = data.person;
@@ -1019,8 +1265,9 @@
       chip.textContent = p[0];
       chip.className = 'avatar-chip ' + (p === P2 ? 'chip-mg' : 'chip-jc');
 
-      var chore = CHORES.find(function(c) { return c.name === choreName; });
-      document.getElementById('chore-tag').textContent = chore ? (chore.emoji + ' ' + chore.name) : choreName;
+      var item = CHORES.find(function(c) { return c.name === choreName; }) ||
+                 HABITS.find(function(h) { return h.name === choreName; });
+      document.getElementById('chore-tag').textContent = item ? (item.emoji + ' ' + item.name) : choreName;
       document.getElementById('winner-name').textContent = p;
 
       var streakEl = document.getElementById('streak-line');
@@ -1067,10 +1314,30 @@
       showHome();
     }
 
-    // ---- Record a chore ----
+    // ---- Record a chore or habit ----
     async function recordClean(person, btn) {
       if (!currentChore) return;
       var rect = btn.getBoundingClientRect();
+
+      if (isHabitMode) {
+        var res = await fetch('/api/habits/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ person: person, habit: currentChore })
+        });
+        if (res.ok) {
+          var data = await res.json();
+          habitTodayCount[currentChore] = (habitTodayCount[currentChore] || 0) + 1;
+          if (habitWeekly.players) habitWeekly.players[person] = (habitWeekly.players[person] || 0) + 1;
+          burst(rect.left + rect.width/2, rect.top + rect.height/3);
+          showToast('Logged for ' + person + '!');
+          showFrame2(currentChore, data);
+        } else {
+          showToast('Something went wrong');
+        }
+        return;
+      }
+
       var res = await fetch('/api/clean', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1184,20 +1451,50 @@
     document.getElementById('overlay-settings').addEventListener('click', function(e) {
       if (e.target === this) closeOverlay('overlay-settings');
     });
+    document.getElementById('overlay-habit-trophy').addEventListener('click', function(e) {
+      if (e.target === this) closeOverlay('overlay-habit-trophy');
+    });
+    document.getElementById('overlay-habit-settings').addEventListener('click', function(e) {
+      if (e.target === this) closeOverlay('overlay-habit-settings');
+    });
 
     // ---- Reset ----
-    function confirmReset() { document.getElementById('modal-confirm').classList.remove('hidden'); }
-    function closeConfirm()  { document.getElementById('modal-confirm').classList.add('hidden'); }
+    var resetMode = 'chores';
+
+    function confirmReset() {
+      resetMode = 'chores';
+      document.getElementById('modal-confirm-text').textContent = 'All chore records will be deleted permanently.';
+      document.getElementById('modal-confirm').classList.remove('hidden');
+    }
+
+    function confirmHabitReset() {
+      resetMode = 'habits';
+      document.getElementById('modal-confirm-text').textContent = 'All habit records will be deleted permanently.';
+      document.getElementById('modal-confirm').classList.remove('hidden');
+    }
+
+    function closeConfirm() { document.getElementById('modal-confirm').classList.add('hidden'); }
 
     async function doReset() {
       closeConfirm();
-      closeOverlay('overlay-settings');
-      var res = await fetch('/api/reset', {method:'POST'});
-      if (res.ok) {
-        todayDone = {};
-        weeklyStats = { players: {}, chores: {} };
-        showToast('Scores cleared!');
-        showHome();
+      if (resetMode === 'habits') {
+        closeOverlay('overlay-habit-settings');
+        var res = await fetch('/api/habits/reset', {method:'POST'});
+        if (res.ok) {
+          habitTodayCount = {};
+          habitWeekly = { players: {} };
+          showToast('Habit scores cleared!');
+          showHome();
+        }
+      } else {
+        closeOverlay('overlay-settings');
+        var res = await fetch('/api/reset', {method:'POST'});
+        if (res.ok) {
+          todayDone = {};
+          weeklyStats = { players: {}, chores: {} };
+          showToast('Scores cleared!');
+          showHome();
+        }
       }
     }
 
