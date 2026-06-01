@@ -111,6 +111,18 @@ def week_start_str():
     monday = today - timedelta(days=today.weekday())
     return monday.strftime("%Y-%m-%d")
 
+def resolve_date(date_str):
+    if not date_str:
+        return today_str()
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return today_str()
+    today = datetime.now().date()
+    if d > today or (today - d).days > 7:
+        return today_str()
+    return d.strftime("%Y-%m-%d")
+
 def calc_streak(db, person, chore):
     rows = db.execute(
         "SELECT cleaned_date FROM cleanings WHERE person = ? AND chore = ? ORDER BY cleaned_date DESC",
@@ -159,9 +171,10 @@ def calc_habit_monthly(db, person, habit):
 @app.route("/api/today", methods=["GET"])
 def get_today():
     db = get_db()
+    target_date = resolve_date(request.args.get("date"))
     rows = db.execute(
         "SELECT person, chore FROM cleanings WHERE cleaned_date = ?",
-        (today_str(),)
+        (target_date,)
     ).fetchall()
     now = datetime.now()
     result = []
@@ -188,20 +201,20 @@ def record_clean():
         return jsonify({"error": "Unknown chore"}), 400
 
     db = get_db()
-    today = today_str()
+    target_date = resolve_date(data.get("date"))
 
-    # Once-per-day chores: block if already logged today by anyone
+    # Once-per-day chores: block if already logged on the target date by anyone
     if chore not in MULTI_PER_DAY_CHORES:
         existing = db.execute(
             "SELECT person FROM cleanings WHERE cleaned_date = ? AND chore = ?",
-            (today, chore)
+            (target_date, chore)
         ).fetchone()
         if existing:
             return jsonify({"error": "Already done today", "person": existing["person"]}), 409
 
     db.execute(
         "INSERT INTO cleanings (person, chore, cleaned_date, cleaned_at) VALUES (?, ?, ?, ?)",
-        (person, chore, today, datetime.now().isoformat())
+        (person, chore, target_date, datetime.now().isoformat())
     )
     db.commit()
 
@@ -296,9 +309,10 @@ def reset_all():
 @app.route("/api/habits/today", methods=["GET"])
 def get_habits_today():
     db = get_db()
+    target_date = resolve_date(request.args.get("date"))
     rows = db.execute(
         "SELECT person, habit FROM habits WHERE logged_date = ?",
-        (today_str(),)
+        (target_date,)
     ).fetchall()
     now = datetime.now()
     result = []
@@ -322,11 +336,11 @@ def log_habit():
         return jsonify({"error": "Unknown person"}), 400
     if habit not in HABIT_NAMES:
         return jsonify({"error": "Unknown habit"}), 400
-    db    = get_db()
-    today = today_str()
+    db = get_db()
+    target_date = resolve_date(data.get("date"))
     db.execute(
         "INSERT INTO habits (person, habit, logged_date, logged_at) VALUES (?, ?, ?, ?)",
-        (person, habit, today, datetime.now().isoformat())
+        (person, habit, target_date, datetime.now().isoformat())
     )
     db.commit()
     now = datetime.now()

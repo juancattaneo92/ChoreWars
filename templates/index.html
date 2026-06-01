@@ -84,7 +84,42 @@
       letter-spacing: 0.02em;
     }
 
-    .date-block { display: flex; flex-direction: column; gap: 1px; }
+    .date-label.date-label-past {
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .date-block {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .btn-back-today {
+      background: rgba(251,191,36,0.18);
+      border: 1px solid rgba(251,191,36,0.5);
+      border-radius: 16px;
+      padding: 0 min(3.5vw, 2.4vh);
+      height: min(14vw, 10vh);
+      min-height: 48px;
+      font-size: min(4vw, 2.8vh);
+      font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      color: #fbbf24;
+      white-space: nowrap;
+    }
+    .btn-back-today:active { background: rgba(251,191,36,0.35); }
     .time-label {
       font-size: min(4vw, 2.8vh);
       font-weight: 700;
@@ -699,6 +734,41 @@
       line-height: 1.4;
       pointer-events: none;
     }
+
+    /* ============================================================
+       DATE PICKER
+    ============================================================ */
+    .datepicker-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    .btn-day {
+      width: 100%;
+      flex-shrink: 0;
+      padding: min(2.8vw, 2vh) min(4vw, 2.8vh);
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      color: var(--text);
+    }
+    .btn-day:active { background: rgba(255,255,255,0.20); }
+    .btn-day-selected {
+      background: rgba(196,132,252,0.2);
+      border-color: rgba(196,132,252,0.5);
+    }
+    .day-label { font-size: min(5.5vw, 3.8vh); font-weight: 900; }
+    .day-date  { font-size: min(4.5vw, 3.2vh); font-weight: 700; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -712,13 +782,16 @@
       <button class="tab-btn" data-tab="habits" onclick="switchTab('habits')">🌱 Habits</button>
     </div>
     <div class="header">
-      <div class="date-block">
+      <div class="date-block" onclick="openDatePicker()">
         <div class="date-label" id="hdr-date-home"></div>
         <div class="time-label" id="hdr-time-home"></div>
       </div>
       <div class="header-right">
-        <button class="icon-btn" onclick="openTrophyForTab()"><i class="icon-star">&#9733;</i></button>
-        <button class="icon-btn" onclick="openSettingsForTab()">&#9881;&#65039;</button>
+        <div id="hdr-icons-normal" style="display:flex;gap:8px">
+          <button class="icon-btn" onclick="openTrophyForTab()"><i class="icon-star">&#9733;</i></button>
+          <button class="icon-btn" onclick="openSettingsForTab()">&#9881;&#65039;</button>
+        </div>
+        <button class="btn-back-today hidden" id="hdr-back-today" onclick="goToday()">&#8629; Today</button>
       </div>
     </div>
     <div class="weekly-strip">
@@ -795,6 +868,20 @@
     </div>
     <div class="return-bar-track"><div id="return-bar"></div></div>
     <div class="sad-cat">&#128575; <span id="sad-initials" class="sad-initials"></span></div>
+  </div>
+
+  <!-- ============================================================
+       FRAME — Date Picker
+  ============================================================ -->
+  <div id="frame-datepicker" class="frame hidden">
+    <div class="header">
+      <div class="header-left">
+        <button class="btn-back" onclick="showHome()">&#8592;</button>
+      </div>
+      <div class="chore-header-label">Pick a date</div>
+      <div style="width:min(18vw,12vh)"></div>
+    </div>
+    <div class="datepicker-list" id="datepicker-list"></div>
   </div>
 
   <!-- ============================================================
@@ -924,6 +1011,7 @@
 
     let currentTab = "chores";
     let currentDay      = localDateStr();
+    let selectedDate    = localDateStr();
     let currentChore    = null;
     let isHabitMode     = false;
     let todayDone       = {};
@@ -1058,8 +1146,54 @@
       return hh + ':' + mm;
     }
 
+    function updateBackdateUI() {
+      var isPast = selectedDate !== localDateStr();
+      document.getElementById('hdr-date-home').classList.toggle('date-label-past', isPast);
+      document.getElementById('hdr-icons-normal').classList.toggle('hidden', isPast);
+      document.getElementById('hdr-back-today').classList.toggle('hidden', !isPast);
+      updateDateHeaders();
+    }
+
+    function openDatePicker() {
+      var list = document.getElementById('datepicker-list');
+      list.innerHTML = '';
+      for (var i = 0; i < 7; i++) {
+        var d = new Date();
+        d.setDate(d.getDate() - i);
+        var ds = d.getFullYear() + '-' +
+          String(d.getMonth()+1).padStart(2,'0') + '-' +
+          String(d.getDate()).padStart(2,'0');
+        var label = i === 0 ? 'Today' : i === 1 ? 'Yesterday' :
+          d.toLocaleDateString('en-US', {weekday: 'long'});
+        var btn = document.createElement('button');
+        btn.className = 'btn-day' + (ds === selectedDate ? ' btn-day-selected' : '');
+        btn.innerHTML = '<span class="day-label">' + label + '</span>' +
+          '<span class="day-date">' + fmtDate(ds) + '</span>';
+        (function(date) { btn.onclick = function() { selectDate(date); }; })(ds);
+        list.appendChild(btn);
+      }
+      document.getElementById('frame-home').classList.add('hidden');
+      document.getElementById('frame-select').classList.add('hidden');
+      document.getElementById('frame-today').classList.add('hidden');
+      document.getElementById('frame-datepicker').classList.remove('hidden');
+    }
+
+    async function selectDate(dateStr) {
+      selectedDate = dateStr;
+      updateBackdateUI();
+      await loadAll();
+      showHome();
+    }
+
+    async function goToday() {
+      selectedDate = localDateStr();
+      updateBackdateUI();
+      await loadAll();
+      showHome();
+    }
+
     function updateDateHeaders() {
-      var label = fmtDate(localDateStr());
+      var label = fmtDate(selectedDate);
       var time  = timeLabel();
       ['hdr-date-home','hdr-date-select','today-date-txt'].forEach(function(id) {
         var el = document.getElementById(id);
@@ -1123,11 +1257,12 @@
 
     // ---- Load data ----
     async function loadAll() {
+      var dateSuffix = selectedDate !== localDateStr() ? '?date=' + selectedDate : '';
       var results = await Promise.all([
-        fetch('/api/today'),
+        fetch('/api/today' + dateSuffix),
         fetch('/api/weekly'),
         fetch('/api/chore-status'),
-        fetch('/api/habits/today'),
+        fetch('/api/habits/today' + dateSuffix),
         fetch('/api/habits/weekly'),
       ]);
       var todayItems      = await results[0].json();
@@ -1227,6 +1362,7 @@
       document.getElementById('frame-home').classList.remove('hidden');
       document.getElementById('frame-select').classList.add('hidden');
       document.getElementById('frame-today').classList.add('hidden');
+      document.getElementById('frame-datepicker').classList.add('hidden');
     }
 
     function selectChore(name) {
@@ -1323,7 +1459,7 @@
         var res = await fetch('/api/habits/log', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ person: person, habit: currentChore })
+          body: JSON.stringify({ person: person, habit: currentChore, date: selectedDate })
         });
         if (res.ok) {
           var data = await res.json();
@@ -1341,7 +1477,7 @@
       var res = await fetch('/api/clean', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ person: person, chore: currentChore })
+        body: JSON.stringify({ person: person, chore: currentChore, date: selectedDate })
       });
       if (res.ok) {
         var data = await res.json();
@@ -1503,7 +1639,8 @@
       var newDay = localDateStr();
       if (newDay !== currentDay) {
         currentDay = newDay;
-        updateDateHeaders();
+        selectedDate = newDay;
+        updateBackdateUI();
         await loadAll();
         showHome();
       }
